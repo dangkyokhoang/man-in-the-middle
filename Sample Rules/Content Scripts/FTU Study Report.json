@@ -1,13 +1,20 @@
-[{
-  "code": "(() => {const retakeCourses = document.getElementById('lblSo_mon_hoc_lai'), retakeExams = document.getElementById('lblSo_mon_thi_lai'), reportTable = document.getElementById('GridViewBangDiem'); retakeCourses && (retakeCourses.innerText = '0'); retakeExams && (retakeExams.innerText = '0'); if (!reportTable) {return;} const reportBody = reportTable.tBodies[0]; [...reportBody.rows].forEach(row => [...row.cells].some(td => td.innerText === 'F') && row.remove()); [...reportBody.rows].forEach((row, index) => {if (index === 0) {return;} row.style = index % 2 ? 'color:#333333;background-color:#F7F6F3;' : 'color:#284775;background-color:White;';});})();",
-  "scriptType": "JavaScript",
-  "domEvent": "loaded",
-  "urlFilters": ["http://tinchi.ftu.edu.vn/KetQuaHocTap.aspx"],
-  "frameId": 0
-}, {
-  "code": "(() => {const reportTable = document.getElementById('Contents_ctl00_gvDiem'); if (!reportTable) {return;} const reportBody = reportTable.tBodies[0]; let termCell; [...reportBody.rows].forEach(row => {row.cells.length === 9 && (termCell = row.firstElementChild); if ([...row.children].some(td => td.innerText === 'F')) {row.cells.length === 9 && termCell.rowSpan > 1  && row.nextElementSibling.prepend(termCell); termCell.rowSpan -= 1; row.remove();}}); let termCellIndex = -1; [...reportBody.rows].forEach((row, index) => {if (index === 0) {return;} row.className = index % 2 ? 'RowStyle' : 'AltRowStyle'; if (row.cells.length === 9) {termCellIndex += 1; row.cells[0].className = termCellIndex % 2 ? 'rowDeActive' : 'rowActive';}});})();",
-  "scriptType": "JavaScript",
-  "domEvent": "loaded",
-  "urlFilters": ["http://tinchi2.ftu.edu.vn/default.aspx?MenuId=0&page=marktc&ChuyenNganh=1"],
-  "frameId": 0
-}]
+[
+  {
+    "code": "(() => {const retakeCourses = document.getElementById('lblSo_mon_hoc_lai'), retakeExams = document.getElementById('lblSo_mon_thi_lai'), reportTable = document.getElementById('GridViewBangDiem'); retakeCourses && (retakeCourses.innerText = '0'); retakeExams && (retakeExams.innerText = '0'); if (!reportTable) {return;} const reportBody = reportTable.tBodies[0]; [...reportBody.rows].forEach(row => [...row.cells].some(td => td.innerText === 'F') && row.remove()); [...reportBody.rows].forEach((row, index) => {if (index === 0) {return;} row.style = index % 2 ? 'color:#333333;background-color:#F7F6F3;' : 'color:#284775;background-color:White;';});})();",
+    "scriptType": "JavaScript",
+    "domEvent": "loaded",
+    "urlFilters": [
+      "http://tinchi.ftu.edu.vn/KetQuaHocTap.aspx"
+    ],
+    "frameId": 0
+  },
+  {
+    "code": "(() => {const reportTable = document.getElementById('Contents_ctl00_gvDiem'); if (!reportTable) {return;} const reportBody = reportTable.tBodies[0]; let termCell; [...reportBody.rows].forEach(row => {row.cells.length === 9 && (termCell = row.firstElementChild); if ([...row.children].some(td => td.innerText === 'F')) {row.cells.length === 9 && termCell.rowSpan > 1  && row.nextElementSibling.prepend(termCell); termCell.rowSpan -= 1; row.remove();}}); let termCellIndex = -1; [...reportBody.rows].forEach((row, index) => {if (index === 0) {return;} row.className = index % 2 ? 'RowStyle' : 'AltRowStyle'; if (row.cells.length === 9) {termCellIndex += 1; row.cells[0].className = termCellIndex % 2 ? 'rowDeActive' : 'rowActive';}});})();",
+    "scriptType": "JavaScript",
+    "domEvent": "loaded",
+    "urlFilters": [
+      "http://tinchi2.ftu.edu.vn/default.aspx?MenuId=0&page=marktc&ChuyenNganh=1"
+    ],
+    "frameId": 0
+  }
+]
