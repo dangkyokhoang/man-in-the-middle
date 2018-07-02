@@ -1,0 +1,162 @@
+html, *, :after, :before {
+    box-sizing: border-box;
+    border: 0;
+
+    line-height: 1.5;
+    letter-spacing: 0.0125em;
+}
+
+html {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 16px;
+}
+
+:disabled {
+    pointer-events: none;
+}
+
+:focus {
+    outline: none;
+}
+
+body {
+    margin: 1em;
+}
+
+a {
+    text-decoration: none;
+    border-radius: 1em;
+    padding: 0.25em 0.5em;
+
+    background-color: #eeffff;
+}
+
+h1, h2, h3, article, section {
+    margin: 1em 0;
+}
+
+div {
+    margin: 0.5em 0;
+}
+
+.multiline-input-group, .input-group {
+    display: flex;
+}
+
+.multiline-input-group > label,
+.input-group > label {
+    padding: 0.75em 1em;
+
+    background-color: #dddddd;
+}
+
+.multiline-input-group {
+    flex-direction: column;
+}
+
+.multiline-input-group > label {
+    display: block;
+
+    border-radius: 1.5em 1.5em 0 0;
+}
+
+.multiline-input-group > .textarea-wrapper {
+    margin: 0;
+    border-radius: 0 0 1.5em 1.5em;
+    padding: 0.75em 1em;
+
+    background-color: #eeeeee;
+}
+
+textarea {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 100%;
+
+    width: 100%;
+    min-width: 100%;
+    min-height: 5em;
+    max-width: 100%;
+
+    background-color: inherit;
+}
+
+.input-group {
+    width: 400px;
+    max-width: 100%;
+}
+
+.input-group > label {
+    border-radius: 1.5em 0 0 1.5em;
+
+    white-space: nowrap;
+}
+
+button, input, select {
+    font-family: inherit;
+    font-size: 100%;
+
+    border-radius: 1.5em;
+    padding: 0.75em 1em;
+    min-width: 0;
+
+    -moz-appearance: none;
+    -webkit-appearance: none;
+
+    background-color: #eeeeee;
+}
+
+.input-group > input, .input-group > select {
+    flex-grow: 1;
+
+    border-radius: 0 1.5em 1.5em 0;
+
+    width: 300px;
+}
+
+article:not(.active) > .input-group,
+article:not(.active) button,
+article:not(.active) label {
+    display: none;
+}
+
+article:not(.active) .textarea-wrapper {
+    border-radius: 1.5em;
+}
+
+article:not(.active) textarea {
+    height: 1.5em;
+    min-height: 1.5em;
+    max-height: 1.5em;
+
+    pointer-events: none;
+}
+
+.highlight-error {
+    background-color: #ff9279;
+}
+
+.highlight-warning {
+    background-color: #edff79;
+}
+
+.highlight-ok {
+    background-color: #7cff7c;
+}
+
+@media screen and (max-width: 450px), screen and (max-height: 450px) {
+    body {
+        margin: 0.5em;
+    }
+
+    h1, h2, h3, article, section {
+        margin: 0.5em 0;
+    }
+
+    div {
+        margin: 0.25em 0;
+    }
+
+    textarea {
+        min-height: 3em;
+    }
+}
