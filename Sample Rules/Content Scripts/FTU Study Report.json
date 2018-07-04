@@ -13,7 +13,7 @@
     "scriptType": "JavaScript",
     "domEvent": "loaded",
     "urlFilters": [
-      "http://tinchi2.ftu.edu.vn/default.aspx?MenuId=0&page=diemrenluyen&ChuyenNganh="
+      "http://tinchi2.ftu.edu.vn/default.aspx?MenuId=0&page=marktc&ChuyenNganh="
     ],
     "frameId": 0
   }
