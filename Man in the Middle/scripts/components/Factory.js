@@ -1,64 +1,69 @@
 class Factory {
     /**
+     * Each rule type has its own constructor, therefore the rule initialization method.
      * @abstract
-     * @param {object} [details]
+     * @param {object} details
+     * @return {object}
      */
-    static initialize(details) {
+    static initializeRule(details) {
     }
 
     /**
      * @abstract
      * @param {ChangeDetails} details
+     * @return {object} The instance whose detail changed.
      */
-    static change(details) {
+    static changeRuleDetail(details) {
     }
 
     /**
      * Initialize all the rules
      * */
     static async initializeAll() {
-        const detailsArray = await this.getStorageData();
+        let ruleList;
 
-        if (detailsArray) {
-            for (let details of detailsArray) {
-                this.initialize(details);
-            }
+        try {
+            ruleList = await this.getStorageData();
+        } catch (error) {
+            return console.warn(error);
         }
+
+        ruleList.forEach(this.initializeRule);
     }
 
     /**
      * Remove a rule
      * @param {RemoveDetails} removeDescription
      */
-    static remove({index}) {
-        this.ruleConstructor.removeInstance(index);
+    static removeRule({index}) {
+        this.ruleConstructor.getInstance(index).remove();
     }
 
     /**
      * @return {[object]}
      */
-    static getDetailsArray() {
-        const detailsArray = [];
-
-        for (let instance of this.ruleConstructor.instances) {
-            detailsArray.push(instance.toDataObject());
-        }
-
-        return detailsArray;
+    static getRuleList() {
+        return this.ruleConstructor.instances.map(
+            instance => instance.toDataObject()
+        );
     }
 
     /**
      * @return {object}
      */
-    static getDataObject() {
-        return {[this.storageKey]: this.getDetailsArray()};
+    static getRuleData() {
+        return {[this.storageKey]: this.getRuleList()};
     }
 
     /**
      * @return {Promise<array>}
      * */
     static async getStorageData() {
-        return await Storage.get(this.storageKey) || this.defaultStorageData;
+        return await Storage.get(this.storageKey) || this.defaultRuleData;
+    }
+
+    static async saveRuleData() {
+        return await Storage.set(this.getRuleData());
     }
 
     /**
@@ -71,15 +76,15 @@ class Factory {
 
 Factory.ruleTypes = {};
 
-// This is to get rid of IDE warnings
+// To get rid of IDE warnings.
 Factory.ruleConstructor = null;
 Factory.storageKey = null;
-Factory.defaultStorageData = [];
+Factory.defaultRuleData = [];
 
 /**
  * @typedef {UpdateDetails} ChangeDetails
- * @property {string} name - The name of the changed detail.
- * @property {string} value - The detail's new value.
+ * @property {string} name - The name of the changed rule detail.
+ * @property {string} value - The rule detail's new value.
  * */
 
 /**

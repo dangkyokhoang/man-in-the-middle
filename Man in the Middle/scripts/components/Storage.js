@@ -1,26 +1,28 @@
 class Storage {
     /**
      * @param {(null|string|[string])} [keys = null]
-     *
-     * @return {Promise<*>}
+     * @return {Promise}
      */
     static async get(keys = null) {
-        if (keys === null || Array.isArray(keys)) {
-
-            return browser.storage.sync.get(keys);
-
-        } else if (typeof keys === 'string') {
+        try {
             const result = await browser.storage.sync.get(keys);
 
-            return result[keys];
+            return keys === null || Array.isArray(keys) ?
+                result :
+                result[keys];
+        } catch (error) {
+            console.warn(error);
         }
     }
 
     /**
      * @param {object} items
-     * @return {Promise<void>}
      */
-    static set(items) {
-        return browser.storage.sync.set(items);
+    static async set(items) {
+        try {
+            return await browser.storage.sync.set(items);
+        } catch (error) {
+            console.warn(error);
+        }
     }
 }

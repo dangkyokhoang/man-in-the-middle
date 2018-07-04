@@ -13,41 +13,14 @@ class BlockingRule extends Rule {
                 }) {
         super();
 
-        this.setMatchPatterns(matchPatterns);
-        this.setOriginUrlFilters(originUrlFilters);
-        this.setMethod(method);
-    }
-
-    /**
-     * Block request if it satisfies request filters
-     * */
-    onRequestCallback({url, originUrl, method}) {
-        if (method !== this.method) {
-            return;
-        }
-
-        if (this.originUrlFilters.length) {
-            // If the originalUrl is undefined, let it be the url
-            originUrl = originUrl || url;
-
-            let isOriginUrlMatched = false;
-
-            for (let originUrlFilter of this.originUrlFilters) {
-                if (originUrl.includes(originUrlFilter)) {
-                    isOriginUrlMatched = true;
-                }
-            }
-
-            if (!isOriginUrlMatched) {
-                return;
-            }
-        }
-
-        return {cancel: true};
+        this.setMatchPatterns(matchPatterns)
+            .setOriginUrlFilters(originUrlFilters)
+            .setMethod(method);
     }
 
     /**
      * @param {[string]} matchPatterns
+     * @return {BlockingRule}
      */
     setMatchPatterns(matchPatterns) {
         this.matchPatterns = [...new Set(matchPatterns)];
@@ -56,54 +29,98 @@ class BlockingRule extends Rule {
             this.deactivate();
             this.activate();
         }
+
+        return this;
     }
 
     /**
      * @param {[string]} originUrlFilters
+     * @return {BlockingRule}
      * */
     setOriginUrlFilters(originUrlFilters) {
         this.originUrlFilters = [...new Set(originUrlFilters)];
+        this.originFilterRule = this.constructor.createEventUrlFilters(
+            this.originUrlFilters
+        );
+
+        return this;
     }
 
     /**
      * @param {string} method
+     * @return {BlockingRule}
      * */
     setMethod(method) {
         this.method = method;
+
+        return this;
     }
 
     /**
-     * @inheritDoc
+     * @override
+     * @return {BlockingRule}
      */
     activate() {
-        if (this.isActive()) {
-            return;
+        if (!this.isActive()) {
+            this.active = true;
+
+            if (this.matchPatterns.length) {
+                this.constructor.webRequestEvent.addListener(
+                    this.onRequestCallback,
+                    {
+                        urls: this.matchPatterns
+                    },
+                    ['blocking']
+                );
+            }
         }
 
-        if (this.matchPatterns.length) {
-            this.constructor.webRequestEvent.addListener(
-                this.onRequestCallback,
-                {urls: this.matchPatterns},
-                ['blocking']
+        return this;
+    }
+
+    /**
+     * @override
+     * @return {BlockingRule}
+     */
+    deactivate() {
+        if (this.isActive()) {
+            this.active = false;
+
+            this.constructor.webRequestEvent.removeListener(
+                this.onRequestCallback
             );
         }
 
-        this.active = true;
+        return this;
     }
 
     /**
-     * @inheritDoc
-     */
-    deactivate() {
-        if (!this.isActive()) {
+     * Block request if it satisfies request filters
+     * @private
+     * @see {@link https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/webRequest/onBeforeRequest}
+     * */
+    onRequestCallback({method, originUrl, url}) {
+        if (method !== this.method) {
             return;
         }
 
-        this.constructor.webRequestEvent.removeListener(
-            this.onRequestCallback
-        );
+        if (this.originFilterRule.length) {
+            // If the request origin's URL is undefined,
+            // let it be the request URL.
+            if (!originUrl) {
+                originUrl = url;
+            }
 
-        this.active = false;
+            if (!this.originFilterRule.some(
+                    ({urlContains = '', urlMatches = ''}) =>
+                        urlContains && originUrl.includes(urlContains) ||
+                        urlMatches && RegExp(urlMatches).test(originUrl)
+                )) {
+                return;
+            }
+        }
+
+        return {cancel: true};
     }
 
     /**
@@ -124,7 +141,7 @@ BlockingRule.webRequestEvent = browser.webRequest.onBeforeRequest;
 
 /**
  * @typedef {object} BlockingRuleDetails
- * @param {[string]} matchPatterns = []
- * @param {[string]} originUrlFilters = []
+ * @param {[string]} matchPatterns = [] - Value '<all_urls>' is not allowed.
+ * @param {[UrlFilter]} originUrlFilters = []
  * @param {string} method = 'GET'
  * */

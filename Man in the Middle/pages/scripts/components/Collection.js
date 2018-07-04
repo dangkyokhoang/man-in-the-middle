@@ -1,49 +1,73 @@
 /**
- * This makes it easy to work with rules.
+ * This makes it easy to deal with rules.
  * */
 class Collection {
     /**
+     * Each type of rule has its own details, therefore the creation method of input groups.
      * @abstract
-     * @param {object} details - The rule details.
-     * @return {HTMLElement} The created rule element.
+     * @param {HTMLElement} ruleElement - The rule element to contain input elements.
+     * @param {object} details - Rule details.
      * */
-    static createRuleElement(details) {
+    static createInputGroups(ruleElement, details) {
     }
 
     /**
-     * Ask the background script for the list of rules and display them all.
+     * Get rules from the background script and display them all.
      * */
     static async displayAllRules() {
-        const detailsArray = await Message.send({
-            event: 'get',
-            ruleType: this.ruleType
-        });
+        let ruleList;
 
-        if (detailsArray) {
-            for (let details of detailsArray) {
-                this.displayRule(details);
-            }
+        try {
+            ruleList = await Message.send({
+                event: 'get',
+                ruleType: this.ruleType
+            });
+        } catch (error) {
+            return console.warn(error);
         }
+
+        ruleList.forEach(this.displayRule);
     }
 
     /**
      * Tell the background script to add a new rule, display the new rule.
-     * @return {HTMLElement} The rule element.
      * */
     static async addRule() {
-        return this.displayRule(await Message.send({
-            event: 'add',
-            ruleType: this.ruleType
-        }));
+        let details;
+
+        try {
+            details = await Message.send({
+                event: 'add',
+                ruleType: this.ruleType
+            });
+        } catch (error) {
+            return console.warn(error);
+        }
+
+        DOMHelper.activateElement(
+            this.displayRule(details)
+        );
     }
 
     /**
      * Display a rule.
-     * @param {object} details
+     * @param {object} details - Rule details.
      * @return {HTMLElement} The created rule element.
      * */
     static displayRule(details) {
-        const ruleElement = this.createRuleElement(details);
+        const ruleElement = DOMHelper.createNode({
+            tagName: 'ARTICLE',
+            parent: this.container
+        });
+
+        this.createInputGroups(ruleElement, details);
+
+        this.createRemoveButton({
+            tagName: 'BUTTON',
+            parent: ruleElement,
+            classList: ['highlight-error'],
+            children: [{text: 'Remove'}]
+        });
 
         this.container.appendChild(ruleElement);
 
@@ -53,111 +77,53 @@ class Collection {
     }
 
     /**
-     * Create and display an input group, add default event listeners thereto.
+     * Create an input group, add default event listeners thereto.
      * @param {InputGroupDetails} details
-     * @return {HTMLElement} The input group element.
      * @see {DOMHelper.createInputGroup}
      * */
     static createInputGroup(details) {
-        const inputGroup = DOMHelper.createInputGroup(details);
-
-        inputGroup.addEventListener('change', this.onChangeCallback, false);
-
-        DOMHelper.isMultilineInput(details.input) &&
-        inputGroup.addEventListener('click', this.toggleActiveStateCallback, false);
-
-        return inputGroup;
+        DOMHelper.createInputGroup(details)
+            .addEventListener('change', this.onChangeCallback, false);
     }
 
     /**
-     * Create and display a select group, add default event listeners thereto.
+     * Create a select group, add default event listeners thereto.
      * @param {SelectGroupDetails} details
-     * @return {HTMLElement} The input group element.
      * @see {DOMHelper.createSelectGroup}
      * */
     static createSelectGroup(details) {
-        const selectGroup = DOMHelper.createSelectGroup(details);
-
-        selectGroup.addEventListener('change', this.onChangeCallback, false);
-
-        return selectGroup;
+        DOMHelper.createSelectGroup(details)
+            .addEventListener('change', this.onChangeCallback, false);
     }
 
     /**
-     * Create and display the remove button, add default event listeners to the button.
+     * Create a select group, add default event listeners thereto.
+     * @param {TextareaGroupDetails} details
+     * @see {DOMHelper.createTextareaGroup}
+     * */
+    static createTextareaGroup(details) {
+        const textareaGroup = DOMHelper.createTextareaGroup(details);
+
+        textareaGroup.addEventListener(
+            'change',
+            this.onChangeCallback,
+            false
+        );
+        textareaGroup.addEventListener(
+            'click',
+            this.toggleStateCallback,
+            false
+        );
+    }
+
+    /**
+     * Create rule's remove button, add default event listeners thereto.
      * @param {NodeDetails} details
-     * @return {HTMLElement} The button element.
      * @see {DOMHelper.createNode}
      * */
     static createRemoveButton(details) {
-        const removeButton = DOMHelper.createNode(details);
-
-        if (removeButton) {
-            removeButton.addEventListener('dblclick', this.removeCallback, true);
-
-            return removeButton;
-        }
-    }
-
-    /**
-     * Remove a rule element, notify the background script.
-     * @private
-     * @param {MouseEvent} event
-     * @param {HTMLElement} event.target
-     * */
-    static async removeCallback(event) {
-        const index = this.getIndex(event.target);
-
-        // Remove the rule element
-        this.ruleElements[index].remove();
-
-        // Remove the rule from the collection's rule element list
-        this.ruleElements.splice(index, 1);
-
-        await Message.send({
-            event: 'remove',
-            ruleType: this.ruleType,
-            details: {
-                index
-            }
-        });
-    }
-
-    /**
-     * Notify the background script on rule detail change.
-     * @private
-     * @param {MouseEvent} event
-     * @param {HTMLElement} event.target
-     * */
-    static async onChangeCallback(event) {
-        await Message.send({
-            event: 'change',
-            ruleType: this.ruleType,
-            details: {
-                index: this.getIndex(event.target),
-                name: event.target.name,
-                value: event.target.value
-            }
-        });
-    }
-
-    /**
-     * @private
-     * @param {MouseEvent} event
-     * @param {HTMLElement} event.target
-     * */
-    static toggleActiveStateCallback(event) {
-        const ruleElement = this.getRuleElement(event.target);
-
-        if (DOMHelper.isActiveElement(ruleElement)) {
-            if (event.target.tagName === 'LABEL') {
-                DOMHelper.deactivateElement(ruleElement);
-            }
-        } else {
-            if (event.target.tagName === 'DIV') {
-                DOMHelper.activateElement(ruleElement);
-            }
-        }
+        DOMHelper.createNode(details)
+            .addEventListener('dblclick', this.removeCallback, false);
     }
 
     /**
@@ -176,11 +142,81 @@ class Collection {
      * @return {number}
      * */
     static getIndex(element) {
-        return this.ruleElements.indexOf(this.getRuleElement(element));
+        return this.ruleElements.indexOf(element);
+    }
+
+    /**
+     * Notify the background script on rule detail change.
+     * @private
+     * @param {MouseEvent} event
+     * @param {HTMLElement} event.target
+     * */
+    static async onChangeCallback(event) {
+        try {
+            await Message.send({
+                event: 'change',
+                ruleType: this.ruleType,
+                details: {
+                    index: this.getIndex(this.getRuleElement(event.target)),
+                    name: event.target.name,
+                    value: event.target.value
+                }
+            });
+        } catch (error) {
+            console.warn(error);
+        }
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} event
+     * @param {HTMLElement} event.target
+     * */
+    static toggleStateCallback(event) {
+        const ruleElement = this.getRuleElement(event.target);
+
+        if (DOMHelper.isElementActive(ruleElement)) {
+            if (event.target.tagName === 'LABEL') {
+                DOMHelper.deactivateElement(ruleElement);
+            }
+        } else {
+            if (event.target.tagName === 'DIV') {
+                DOMHelper.activateElement(ruleElement);
+            }
+        }
+    }
+
+    /**
+     * Remove a rule and notify the background script.
+     * @private
+     * @param {MouseEvent} event
+     * @param {HTMLElement} event.target
+     * */
+    static async removeCallback(event) {
+        const
+            ruleElement = this.getRuleElement(event.target),
+            index = this.getIndex(ruleElement);
+
+        ruleElement.remove();
+
+        // Remove the rule from the collection's rule element list.
+        this.ruleElements.splice(index, 1);
+
+        try {
+            await Message.send({
+                event: 'remove',
+                ruleType: this.ruleType,
+                details: {
+                    index
+                }
+            });
+        } catch (error) {
+            return console.warn(error);
+        }
     }
 }
 
-// This is to get rid of IDE warnings
+// To get rid of IDE warnings.
 Collection.ruleType = '';
 Collection.ruleElements = [];
 Collection.container = null;

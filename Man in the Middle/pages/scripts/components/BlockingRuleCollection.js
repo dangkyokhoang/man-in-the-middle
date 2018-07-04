@@ -2,33 +2,24 @@ class BlockingRuleCollection extends Collection {
     /**
      * @inheritDoc
      */
-    static createRuleElement({
+    static createInputGroups(ruleElement,
+                             {
                                  matchPatterns = [],
                                  originUrlFilters = [],
                                  method = 'GET'
                              }) {
-
-        const ruleElement = DOMHelper.createNode({
-            tagName: 'ARTICLE',
-            parent: this.container,
-        });
-
-        this.createInputGroup({
+        this.createTextareaGroup({
             parent: ruleElement,
             text: 'Match patterns',
-            input: {
-                tagName: 'DIV',
-                classList: ['textarea-wrapper'],
-                children: [{
-                    tagName: 'TEXTAREA',
-                    attributes: {
-                        placeholder: 'URL patterns to block',
-                        name: 'matchPatterns'
-                    },
-                    children: matchPatterns.length ?
-                        [{text: matchPatterns.join('\n')}] :
-                        undefined,
-                }]
+            textarea: {
+                tagName: 'TEXTAREA',
+                attributes: {
+                    name: 'matchPatterns',
+                    placeholder: 'URL patterns to block'
+                },
+                children: matchPatterns.length ?
+                    [{text: matchPatterns.join('\n')}] :
+                    []
             }
         });
 
@@ -38,9 +29,9 @@ class BlockingRuleCollection extends Collection {
             input: {
                 tagName: 'INPUT',
                 attributes: {
+                    name: 'originUrlFilters',
                     value: originUrlFilters.join(', '),
-                    placeholder: 'Origin URL filters',
-                    name: 'originUrlFilters'
+                    placeholder: 'Origin URL filters'
                 }
             }
         });
@@ -50,7 +41,9 @@ class BlockingRuleCollection extends Collection {
             text: 'Method',
             select: {
                 tagName: 'SELECT',
-                attributes: {name: 'method'},
+                attributes: {
+                    name: 'method'
+                },
                 options: [
                     {value: 'GET'},
                     {value: 'POST'},
@@ -65,19 +58,11 @@ class BlockingRuleCollection extends Collection {
                 selectedValue: method
             }
         });
-
-        this.createRemoveButton({
-            tagName: 'BUTTON',
-            parent: ruleElement,
-            classList: ['highlight-error'],
-            children: [{text: 'Remove'}]
-        });
-
-        return ruleElement;
     }
 }
 
 Binder.bindMethods(BlockingRuleCollection);
 
 BlockingRuleCollection.ruleType = 'BlockingRule';
+
 BlockingRuleCollection.ruleElements = [];

@@ -2,54 +2,65 @@ class BlockingRuleFactory extends Factory {
     /**
      * @inheritDoc
      */
-    static initialize(details = {
-        requestUrls: [],
-        urlFilters: [],
-        frameId: 0
-    }) {
-        const blockingRule = new this.ruleConstructor(details);
+    static initializeRule(details) {
+        const blockingRule = new this.ruleConstructor(
+            Object.assign({
+                requestUrls: [],
+                urlFilters: [],
+                frameId: 0
+            }, details)
+        );
 
         Binder.bindParentMethods(blockingRule, [{
             methodEquals: 'onRequestCallback'
         }]);
 
-        blockingRule.activate();
-
-        return blockingRule;
+        return blockingRule.activate();
     }
 
     /**
      * @inheritDoc
      */
-    static change({index, name, value}) {
-        const instance = this.ruleConstructor.getInstance(index);
-
-        if (!instance) {
-            return;
-        }
+    static changeRuleDetail({index, name, value}) {
+        const ruleInstance = this.ruleConstructor.getInstance(index);
 
         switch (name) {
             case 'matchPatterns':
-                value = value.trim();
-                return instance.setMatchPatterns(value ?
-                    value.split(/\s*[\r\n]\s*/) :
-                    []);
+                ruleInstance.setMatchPatterns(
+                    value
+                        .trim()
+                        .split(/\s*[\r\n]\s*/)
+                        .filter(matchPattern =>
+                            matchPattern && matchPattern !== '<all_urls>')
+                );
+
+                break;
             case 'originUrlFilters':
-                value = value.trim();
-                return instance.setOriginUrlFilters(value ?
-                    value.split(/\s*,\s*/) :
-                    []);
+                ruleInstance.setOriginUrlFilters(
+                    value
+                        .trim()
+                        .split(/\s*[\r\n]\s*/)
+                        .filter(originUrlFilters => originUrlFilters)
+                );
+
+                break;
             case 'method':
-                return instance.setMethod(value);
+                ruleInstance.setMethod(value);
         }
+
+        return ruleInstance;
     }
 }
+
+Binder.bindOwnMethods(BlockingRuleFactory);
 
 Factory.ruleTypes.BlockingRule = BlockingRuleFactory;
 
 BlockingRuleFactory.ruleConstructor = BlockingRule;
+
 BlockingRuleFactory.storageKey = 'blockingRules';
-BlockingRuleFactory.defaultStorageData = [{
+
+BlockingRuleFactory.defaultRuleData = [{
     matchPatterns: [
         'https://*/ajax/bz*',
         'https://*/ajax/mercury/change_read_status*',

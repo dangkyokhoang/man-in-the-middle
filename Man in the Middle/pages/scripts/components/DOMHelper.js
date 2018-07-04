@@ -5,49 +5,42 @@ class DOMHelper {
     /**
      * Create node(s).
      * @param {NodeDetails}
-     * @return {(HTMLElement|Node)} - The top-most node created.
+     * @return {(HTMLElement|Node)} The top-most node created.
      * */
     static createNode({
+                          tagName = '',
                           text = '',
-                          tagName = 'DIV',
                           classList = [],
                           attributes = {},
                           parent = null,
                           children = []
                       }) {
+        let node;
 
-        // Text nodes are prioritized
-        if (text !== '') {
-            const textNode = document.createTextNode(text);
+        // Elements are prioritized.
+        if (tagName) {
+            node = document.createElement(tagName);
 
-            parent && parent.appendChild(textNode);
-
-            return textNode;
-        }
-
-        // If it's not a text node, create element(s) instead.
-        const element = document.createElement(tagName);
-
-        if (classList.length > 0) {
-            element.classList.add.apply(element.classList, classList);
-        }
-
-        for (let attribute of Object.entries(attributes)) {
-            element.setAttribute(attribute[0], attribute[1]);
-        }
-
-        parent && parent.appendChild(element);
-
-        if (children) {
-            for (let details of children) {
-
-                details.parent = element;
-
-                this.createNode(details);
+            if (classList.length) {
+                node.classList.add.apply(node.classList, classList);
             }
+
+            Object.entries(attributes).forEach(attribute =>
+                node.setAttribute(attribute[0], attribute[1]));
+
+            children.forEach(details =>
+                this.createNode(
+                    Object.assign(details, {
+                        parent: node
+                    })
+                ));
+        } else {
+            node = document.createTextNode(text);
         }
 
-        return element;
+        parent && parent.appendChild(node);
+
+        return node;
     }
 
     /**
@@ -58,6 +51,7 @@ class DOMHelper {
      */
     static createInputGroup({parent, text, input}) {
         return this.createNode({
+            tagName: 'DIV',
             classList: [
                 this.isMultilineInput(input) ?
                     'multiline-input-group' :
@@ -75,7 +69,7 @@ class DOMHelper {
      * Create an select group element.
      * @param {SelectGroupDetails} details
      * @return {HTMLElement} The created select group element.
-     * @see {DOMHelper.createNode}
+     * @see {DOMHelper.createInputGroup}
      */
     static createSelectGroup({parent, text, select}) {
         select.tagName = 'SELECT';
@@ -83,7 +77,9 @@ class DOMHelper {
         select.children = select.options.map(option => {
             option.tagName = 'OPTION';
 
-            option.hasOwnProperty('attributes') || (option.attributes = {});
+            if (!option.hasOwnProperty('attributes')) {
+                option.attributes = {};
+            }
 
             option.attributes.value = option.value;
 
@@ -92,18 +88,34 @@ class DOMHelper {
             }
 
             option.children = [{text: option.text || option.value}];
-            delete option.text;
 
             return option;
         });
 
-        return this.createNode({
-            classList: ['input-group'],
+        return this.createInputGroup({
             parent,
-            children: [{
-                tagName: 'LABEL',
-                children: [{text}]
-            }, select]
+            text,
+            input: select
+        });
+    }
+
+    /**
+     * Create a textarea group element.
+     * @param {TextareaGroupDetails} details
+     * @return {HTMLElement} The created textarea group element.
+     * @see {DOMHelper.createInputGroup}
+     */
+    static createTextareaGroup({parent, text, textarea}) {
+        textarea.tagName = 'TEXTAREA';
+
+        return this.createInputGroup({
+            parent,
+            text,
+            input: {
+                tagName: 'DIV',
+                classList: ['textarea-wrapper'],
+                children: [textarea]
+            }
         });
     }
 
@@ -112,14 +124,13 @@ class DOMHelper {
      * @param {HTMLElement} element
      */
     static activateElement(element) {
-        if (this.isActiveElement(element)) {
+        if (this.isElementActive(element)) {
             return;
         }
 
-        // Deactivate siblings
-        for (let sameLevelElement of element.parentElement.children) {
-            this.deactivateElement(sameLevelElement);
-        }
+        // Deactivate siblings.
+        [...element.parentElement.children].forEach(siblingElement =>
+            this.deactivateElement(siblingElement));
 
         element.classList.add('active');
     }
@@ -135,9 +146,9 @@ class DOMHelper {
     /**
      * Check if an element is 'active'.
      * @param {HTMLElement} element
-     * @return {boolean} - True if the element is active.
+     * @return {boolean} True if the element is active.
      */
-    static isActiveElement(element) {
+    static isElementActive(element) {
         return element.classList.contains('active');
     }
 
@@ -152,7 +163,7 @@ class DOMHelper {
     /**
      * Get element by ID.
      * @param {string} id
-     * @return {(Element|null)}
+     * @return {HTMLElement}
      */
     static id(id) {
         return document.getElementById(id);
@@ -161,10 +172,10 @@ class DOMHelper {
 
 /**
  * @typedef {object} NodeDetails
- * @property {string} [text = '']
- * @property {string} [tagName = 'DIV'] - ELEMENT TAG NAME.
+ * @property {string} [tagName = ''] - ELEMENT TAG NAME. Prioritized over the property 'text'.
+ * @property {string} [text = ''] - Must be non-empty in case the property 'tagName' is empty.
  * @property {array} [classList = []]
- * @property {object.<string>} [attributes = {}]
+ * @property {{string}} [attributes = {}]
  * @property {HTMLElement} [parent = null]
  * @property {[NodeDetails]} [children = []]
  * */
@@ -172,25 +183,32 @@ class DOMHelper {
 /**
  * @typedef {object} InputGroupDetails
  * @property {HTMLElement} [parent]
- * @property {string} text - Input group's label text.
- * @property {NodeDetails} input - Details of the input element.
+ * @property {string} text
+ * @property {NodeDetails} input
  * */
 
 /**
  * @typedef {object} SelectGroupDetails
  * @property {HTMLElement} [parent]
- * @property {string} text - Select group's label text.
- * @property {SelectElementDetails} select - Details of the input element.
+ * @property {string} text
+ * @property {SelectElementDetails} select
  * */
 
 /**
  * @typedef {NodeDetails} SelectElementDetails
  * @property {[OptionElementDetails]} options
- * @property {string} selectedValue - The selected option.
+ * @property {string} selectedValue
  * */
 
 /**
  * @typedef {NodeDetails} OptionElementDetails
  * @property {string} value
  * @property {string} [text = value]
+ * */
+
+/**
+ * @typedef {object} TextareaGroupDetails
+ * @property {HTMLElement} [parent]
+ * @property {string} text
+ * @property {NodeDetails} textarea
  * */

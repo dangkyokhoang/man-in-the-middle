@@ -2,57 +2,71 @@ class ContentScriptFactory extends Factory {
     /**
      * @inheritDoc
      */
-    static initialize(details = {
-        code: '',
-        scriptType: 'JavaScript',
-        domEvent: 'completed',
-        urlFilters: [],
-        frameId: 0
-    }) {
-        const contentScript = new this.ruleConstructor(details);
+    static initializeRule(details) {
+        const contentScript = new this.ruleConstructor(
+            Object.assign({
+                code: '',
+                scriptType: 'JavaScript',
+                domEvent: 'completed',
+                urlFilters: [],
+                frameId: 0
+            }, details)
+        );
 
         Binder.bindParentMethods(contentScript, [{
             methodEquals: 'onNavigateCallback'
         }]);
 
-        contentScript.activate();
-
-        return contentScript;
+        return contentScript.activate();
     }
 
     /**
      * @inheritDoc
      */
-    static change({index, name, value}) {
-        const instance = this.ruleConstructor.getInstance(index);
-
-        if (!instance) {
-            return;
-        }
+    static changeRuleDetail({index, name, value}) {
+        const ruleInstance = this.ruleConstructor.getInstance(index);
 
         switch (name) {
-            case 'scriptType':
-                return instance.setScriptType(value);
             case 'code':
-                return instance.setCode(value);
+                ruleInstance.setCode(value);
+
+                break;
+            case 'scriptType':
+                ruleInstance.setScriptType(value);
+
+                break;
             case 'domEvent':
-                return instance.setDOMEvent(value);
+                ruleInstance.setDOMEvent(value);
+
+                break;
             case 'urlFilters':
-                value = value.trim();
-                return instance.setUrlFilters(value ?
-                    value.split(/\s*,\s*/) :
-                    []);
+                ruleInstance.setUrlFilters(
+                    value
+                        .trim()
+                        .split(/\s*,\s*/)
+                        .filter(urlFilter => urlFilter)
+                );
+
+                break;
             case 'frameId':
-                return instance.setFrameId(parseInt(value));
+                ruleInstance.setFrameId(
+                    parseInt(value)
+                );
         }
+
+        return ruleInstance;
     }
 }
+
+Binder.bindOwnMethods(ContentScriptFactory);
 
 Factory.ruleTypes.ContentScript = ContentScriptFactory;
 
 ContentScriptFactory.ruleConstructor = ContentScript;
+
 ContentScriptFactory.storageKey = 'contentScripts';
-ContentScriptFactory.defaultStorageData = [{
+
+ContentScriptFactory.defaultRuleData = [{
     code: '/* Sample JavaScript code */ ' +
     'document && ' +
     'document.body && ' +
@@ -78,7 +92,7 @@ ContentScriptFactory.defaultStorageData = [{
     'font-family: Arial; ' +
     'border-radius: 1em; ' +
     'padding: 0.25em 1em; ' +
-    'line-height: 1.5m; ' +
+    'line-height: 1.5em; ' +
     'letter-spacing: 0.125em; ' +
     'background-color: #ff69b480; ' +
     'pointer-events: none;' +

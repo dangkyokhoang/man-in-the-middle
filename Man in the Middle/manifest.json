@@ -1,11 +1,11 @@
 {
   "manifest_version": 2,
   "name": "Man in the Middle",
-  "version": "2.0.3",
-  "description": "Changing the ways web pages work by inserting content scripts and intercepting network requests.",
+  "version": "2.1.0",
+  "description": "Change the ways web pages work by injecting content scripts and intercepting network requests.",
   "developer": {
     "name": "Hoàng",
-    "url": "https://www.facebook.com/dangkyokhoang"
+    "url": "https://github.com/dangkyokhoang/Man-in-the-Middle/"
   },
   "applications": {
     "gecko": {

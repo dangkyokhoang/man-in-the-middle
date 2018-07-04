@@ -1,13 +1,14 @@
 /**
- * Rule manager
+ * This makes it easy to deal with rules
  * */
 class Rule {
     /**
      * Initialize a rule
      * */
     constructor() {
-        // This tells whether this rule is active
+        // This tells whether this rule is active.
         this.active = false;
+
         this.constructor.instances.push(this);
     }
 
@@ -41,31 +42,48 @@ class Rule {
      * Remove this instance of rule
      * */
     remove() {
-        this.deactivate();
+        this.isActive() && this.deactivate();
 
         this.constructor.instances.splice(
-            this.constructor.instances.indexOf(this),
+            this.constructor.getIndex(this),
             1
         );
     }
 
     /**
-     * @param {number} index
-     * @return {(Rule|null)}
+     * @param {object} instance
+     * @return {number}
      * */
-    static getInstance(index) {
-        return index < this.instances.length ? this.instances[index] : null;
+    static getIndex(instance) {
+        return this.instances.indexOf(instance);
     }
 
     /**
      * @param {number} index
+     * @return {Rule}
      * */
-    static removeInstance(index) {
-        const instance = this.getInstance(index);
+    static getInstance(index) {
+        return this.instances[index];
+    }
 
-        instance && instance.remove();
+    /**
+     * @param {[UrlFilter]} urlFilters
+     * @return {[browser.events.UrlFilter]}
+     * */
+    static createEventUrlFilters(urlFilters) {
+        return urlFilters.map(
+            urlFilter =>
+                urlFilter.substr(0, 1) === '/' &&
+                urlFilter.substr(-1, 1) === '/' ?
+                    {urlMatches: urlFilter.substr(1, urlFilter.length - 2)} :
+                    {urlContains: urlFilter}
+        );
     }
 }
 
-// This is to get rid of IDE warnings
+// To get rid of IDE warnings.
 Rule.instances = [];
+
+/**
+ * @typedef {string} UrlFilter
+ * */

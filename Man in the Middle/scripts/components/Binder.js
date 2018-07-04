@@ -17,9 +17,8 @@ class Binder {
      * @param {[MethodFilter]} [methodFilters = []]
      * */
     static bindOwnMethods(object, methodFilters = []) {
-        for (let method of this.getMethods(object, methodFilters)) {
-            object[method] = object[method].bind(object);
-        }
+        this.getMethods(object, methodFilters).forEach(method =>
+            object[method] = object[method].bind(object));
     }
 
     /**
@@ -27,14 +26,13 @@ class Binder {
      * @param {[MethodFilter]} [methodFilters = []]
      * */
     static bindParentMethods(object, methodFilters = []) {
-        let parentObject = Object.getPrototypeOf(object);
+        const parent = Object.getPrototypeOf(object);
 
-        if (parentObject) {
-            for (let method of this.getMethods(parentObject, methodFilters)
-                .filter(method => !object.hasOwnProperty(method))) {
-
-                object[method] = parentObject[method].bind(object);
-            }
+        if (parent) {
+            this.getMethods(parent, methodFilters)
+                .filter(method => !object.hasOwnProperty(method))
+                .forEach(method =>
+                    object[method] = parent[method].bind(object));
         }
     }
 
@@ -43,60 +41,54 @@ class Binder {
      * @param {[MethodFilter]} [methodFilters = []]
      * */
     static bindAncestorMethods(object, methodFilters = []) {
-        let ancestorObject = Object.getPrototypeOf(object),
-            higherAncestorObject;
+        let ancestor = Object.getPrototypeOf(object),
+            ancestorParent;
 
-        while (higherAncestorObject = Object.getPrototypeOf(ancestorObject)) {
-            for (let method of this.getMethods(ancestorObject, methodFilters)
-                .filter(method => !object.hasOwnProperty(method))) {
+        // Don't bind Function.prototype methods.
+        while (ancestorParent = Object.getPrototypeOf(ancestor)) {
 
-                object[method] = ancestorObject[method].bind(object);
-            }
+            this.getMethods(ancestor, methodFilters)
+                .filter(method => !object.hasOwnProperty(method))
+                .forEach(method =>
+                    object[method] = ancestor[method].bind(object));
 
-            ancestorObject = Object.getPrototypeOf(higherAncestorObject);
+            ancestor = ancestorParent;
         }
     }
 
     /**
-     * Get filtered method names
+     * Get all filtered method names of an object
      * @param {object} object
-     * @param {[MethodFilter]} [methodFilters]
+     * @param {[MethodFilter]} methodFilters
      * @return {[string]}
      * */
     static getMethods(object, methodFilters) {
         return Object.getOwnPropertyNames(object)
             .filter(property => typeof object[property] === 'function')
-            .filter(method => this.filterMethod(method, methodFilters));
+            .filter(method => this.methodSatisfies(method, methodFilters));
     }
 
     /**
+     * @private
      * @param {string} method
-     * @param {[MethodFilter]} [methodFilters]
-     * @return {boolean} - True if the method satisfies at least one of the filters, false otherwise.
+     * @param {[MethodFilter]} methodFilters
+     * @return {boolean} True if the method satisfies at least one of the filters or if no filter is applied.
      * */
-    static filterMethod(method, methodFilters) {
+    static methodSatisfies(method, methodFilters) {
         if (methodFilters.length === 0) {
             return true;
         }
 
-        for (let methodFilter of methodFilters) {
-            if (methodFilter.hasOwnProperty('methodEquals')) {
-                if (method === methodFilter.methodEquals) {
-                    return true;
-                }
-            } else if (methodFilter.hasOwnProperty('methodContains')) {
-                if (method.includes(methodFilter.methodContains)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        return methodFilters.some(
+            ({methodEquals = '', methodContains = ''}) =>
+                methodEquals && method === methodEquals ||
+                methodContains && method.includes(methodContains)
+        );
     }
 }
 
 /**
  * @typedef {object} MethodFilter
- * @property {string} methodEquals
+ * @property {string} methodEquals - Prioritized over the property 'methodContains'.
  * @property {string} methodContains
  * */

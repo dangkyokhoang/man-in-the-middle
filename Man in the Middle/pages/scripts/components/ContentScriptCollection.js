@@ -2,33 +2,24 @@ class ContentScriptCollection extends Collection {
     /**
      * @inheritDoc
      */
-    static createRuleElement({
+    static createInputGroups(ruleElement,
+                             {
                                  code = '',
                                  scriptType = 'JavaScript',
                                  domEvent = 'completed',
                                  urlFilters = [],
                                  frameId = 0
                              }) {
-
-        const ruleElement = DOMHelper.createNode({
-            tagName: 'ARTICLE',
-            parent: this.container
-        });
-
-        this.createInputGroup({
+        this.createTextareaGroup({
             parent: ruleElement,
             text: 'Code',
-            input: {
-                tagName: 'DIV',
-                classList: ['textarea-wrapper'],
-                children: [{
-                    tagName: 'TEXTAREA',
-                    attributes: {
-                        placeholder: 'JavaScript or CSS code as content script',
-                        name: 'code'
-                    },
-                    children: code ? [{text: code}] : undefined,
-                }]
+            textarea: {
+                tagName: 'TEXTAREA',
+                attributes: {
+                    name: 'code',
+                    placeholder: 'JavaScript or CSS as content script'
+                },
+                children: code ? [{text: code}] : []
             }
         });
 
@@ -36,7 +27,9 @@ class ContentScriptCollection extends Collection {
             parent: ruleElement,
             text: 'Script type',
             select: {
-                attributes: {name: 'scriptType'},
+                attributes: {
+                    name: 'scriptType'
+                },
                 options: [
                     {value: 'JavaScript'},
                     {value: 'CSS'}
@@ -49,7 +42,9 @@ class ContentScriptCollection extends Collection {
             parent: ruleElement,
             text: 'DOM event',
             select: {
-                attributes: {name: 'domEvent'},
+                attributes: {
+                    name: 'domEvent'
+                },
                 options: [
                     {value: 'loading', text: 'Loading'},
                     {value: 'loaded', text: 'Loaded'},
@@ -65,9 +60,9 @@ class ContentScriptCollection extends Collection {
             input: {
                 tagName: 'INPUT',
                 attributes: {
+                    name: 'urlFilters',
                     value: urlFilters.join(', '),
-                    placeholder: 'URL filters',
-                    name: 'urlFilters'
+                    placeholder: 'URL filters'
                 }
             }
         });
@@ -77,7 +72,9 @@ class ContentScriptCollection extends Collection {
             text: 'Frame ID',
             select: {
                 tagName: 'SELECT',
-                attributes: {name: 'frameId'},
+                attributes: {
+                    name: 'frameId'
+                },
                 options: [
                     {value: '0'},
                     {value: '1'},
@@ -86,19 +83,11 @@ class ContentScriptCollection extends Collection {
                 selectedValue: frameId.toString()
             }
         });
-
-        this.createRemoveButton({
-            tagName: 'BUTTON',
-            parent: ruleElement,
-            classList: ['highlight-error'],
-            children: [{text: 'Remove'}]
-        });
-
-        return ruleElement;
     }
 }
 
 Binder.bindMethods(ContentScriptCollection);
 
 ContentScriptCollection.ruleType = 'ContentScript';
+
 ContentScriptCollection.ruleElements = [];

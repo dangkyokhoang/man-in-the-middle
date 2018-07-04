@@ -20,15 +20,126 @@ class ContentScript extends Rule {
             frameId: 0
         };
 
-        this.setCode(code);
-        this.setScriptType(scriptType);
-        this.setDOMEvent(domEvent);
-        this.setUrlFilters(urlFilters);
-        this.setFrameId(frameId);
+        this.setCode(code)
+            .setScriptType(scriptType)
+            .setDOMEvent(domEvent)
+            .setUrlFilters(urlFilters)
+            .setFrameId(frameId);
+    }
+
+    /**
+     * @param {string} code
+     * @return {ContentScript}
+     * */
+    setCode(code) {
+        this.injectDetails.code = code;
+
+        if (this.isActive()) {
+            this.deactivate();
+            this.activate();
+        }
+
+        return this;
+    }
+
+    /**
+     * @param {ScriptTypeString} scriptType
+     * @return {ContentScript}
+     * */
+    setScriptType(scriptType) {
+        this.scriptType = scriptType;
+        this.injector = this.constructor.getScriptInjector(scriptType);
+
+        return this;
+    }
+
+    /**
+     * @param {DOMEventString} domEvent
+     * @return {ContentScript}
+     * */
+    setDOMEvent(domEvent) {
+        const active = this.isActive();
+
+        active && this.deactivate();
+
+        this.domEvent = domEvent;
+        this.navigationEvent = this.constructor.getNavigationEvent(
+            domEvent
+        );
+
+        active && this.activate();
+
+        return this;
+    }
+
+    /**
+     * @param {[string]} urlFilters
+     * @return {ContentScript}
+     * */
+    setUrlFilters(urlFilters) {
+        this.urlFilters = [...new Set(urlFilters)];
+
+        this.filterObject = this.constructor.createFilterRule(
+            this.urlFilters
+        );
+
+        if (this.isActive()) {
+            this.deactivate();
+            this.activate();
+        }
+
+        return this;
+    }
+
+    /**
+     * @param {number} frameId
+     * @return {ContentScript}
+     * @see {@link https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/webNavigation/onDOMContentLoaded#details}
+     * */
+    setFrameId(frameId) {
+        this.injectDetails.frameId = frameId;
+
+        return this;
+    }
+
+    /**
+     * @override
+     * @return {ContentScript}
+     * */
+    activate() {
+        if (!this.isActive()) {
+            this.active = true;
+
+            if (this.injectDetails.code) {
+                this.navigationEvent.addListener(
+                    this.onNavigateCallback,
+                    this.filterObject
+                );
+            }
+        }
+
+        return this;
+    }
+
+    /**
+     * @override
+     * @return {ContentScript}
+     * */
+    deactivate() {
+        if (this.isActive()) {
+            this.active = false;
+
+            this.navigationEvent.removeListener(
+                this.onNavigateCallback
+            );
+        }
+
+        return this;
     }
 
     /**
      * Inject content script if navigation's frame ID matched.
+     * @private
      * @param {NavigationEventDetails}
      * */
     onNavigateCallback({frameId, tabId}) {
@@ -36,88 +147,16 @@ class ContentScript extends Rule {
             return;
         }
 
-        this.injector(tabId, this.injectDetails);
-    }
-
-    /**
-     * @param {string} code
-     * */
-    setCode(code) {
-        this.injectDetails.code = code;
-    }
-
-    /**
-     * @param {ScriptTypeString} scriptType
-     * */
-    setScriptType(scriptType) {
-        this.scriptType = scriptType;
-        this.injector = this.constructor.getScriptInjector(scriptType);
-    }
-
-    /**
-     * @param {DOMEventString} domEvent
-     * */
-    setDOMEvent(domEvent) {
-        const active = this.isActive();
-
-        this.deactivate();
-
-        this.domEvent = domEvent;
-        this.navigationEvent = this.constructor.getNavigationEvent(domEvent);
-
-        if (active) {
-            this.activate();
+        try {
+            this.injector(tabId, this.injectDetails);
+        } catch (error) {
+            console.warn(error);
         }
-    }
-
-    /**
-     * @param {[string]} urlFilters
-     * */
-    setUrlFilters(urlFilters) {
-        this.urlFilters = [...new Set(urlFilters)];
-
-        this.filterObject = this.constructor.createFilterObject(this.urlFilters);
-
-        if (this.isActive()) {
-            this.deactivate();
-            this.activate();
-        }
-    }
-
-    /**
-     * @param {number} frameId
-     * @see {@link https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/webNavigation/onDOMContentLoaded#details}
-     * */
-    setFrameId(frameId) {
-        this.injectDetails.frameId = frameId;
     }
 
     /**
      * @inheritDoc
-     * */
-    activate() {
-        if (this.isActive()) {
-            return;
-        }
-
-        this.navigationEvent.addListener(
-            this.onNavigateCallback,
-            this.filterObject
-        );
-
-        this.active = true;
-    }
-
-    deactivate() {
-        if (!this.isActive()) {
-            return;
-        }
-
-        this.navigationEvent.removeListener(this.onNavigateCallback);
-
-        this.active = false;
-    }
-
+     */
     toDataObject() {
         return {
             code: this.injectDetails.code,
@@ -129,6 +168,7 @@ class ContentScript extends Rule {
     }
 
     /**
+     * @private
      * @param {DOMEventString} domEvent
      * @return {object}
      */
@@ -137,6 +177,7 @@ class ContentScript extends Rule {
     }
 
     /**
+     * @private
      * @param {ScriptTypeString} scriptType
      * @return {function}
      */
@@ -145,27 +186,16 @@ class ContentScript extends Rule {
     }
 
     /**
-     * Create navigation event listener's URL filter object from URL filter set.
+     * Create navigation event listener's URL filter object from URL filters.
      * @param {array} urlFilters
-     * @return {(NavigationEventUrlFilter|undefined)} URL filter object, or undefined if no filter is given.
+     * @return {(NavigationEventUrlFilter|void)} URL filter object, or void if no filter is set.
      */
-    static createFilterObject(urlFilters) {
+    static createFilterRule(urlFilters) {
         if (urlFilters.length === 0) {
-            return undefined;
+            return;
         }
 
-        const url = [];
-
-        for (let urlFilter of urlFilters) {
-            url.push(
-                urlFilter.substr(0, 1) === '/' &&
-                urlFilter.substr(-1, 1) === '/' ?
-                    {urlMatches: urlFilter.substr(1, urlFilter.length - 2)} :
-                    {urlContains: urlFilter}
-            );
-        }
-
-        return {url};
+        return {url: this.createEventUrlFilters(urlFilters)};
     }
 }
 
@@ -184,11 +214,11 @@ ContentScript.scriptInjectors = {
 
 /**
  * @typedef {object} ContentScriptDetails
- * @property {string} [code]
- * @property {ScriptTypeString} [scriptType]
- * @property {DOMEventString} [domEvent]
- * @property {[string]} [urlFilters]
- * @property {number} [frameId]
+ * @property {string} [code = '']
+ * @property {ScriptTypeString} [scriptType = 'JavaScript']
+ * @property {DOMEventString} [domEvent = 'completed']
+ * @property {[string]} [urlFilters = []]
+ * @property {number} [frameId = 0]
  * */
 
 /**
@@ -214,5 +244,5 @@ ContentScript.scriptInjectors = {
 
 /**
  * @typedef {object} NavigationEventUrlFilter
- * @property {[events.UrlFilter]} url
+ * @property {[browser.events.UrlFilter]} url
  * */
