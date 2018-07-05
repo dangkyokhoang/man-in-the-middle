@@ -24,7 +24,7 @@ Events will fire only if the event URL matches at least one of the `URL filter`s
   - `Filter string`, on the other hand, must not.
 
 #### Frame ID
-The frame level in which the content script is injected.
+The level of the frame in which the content script is injected.
 
 ### Blocking Rule
 
@@ -33,9 +33,9 @@ Events will fire only if the event URL matches at least one of the `match patter
 
 - `Match pattern`s are separated by a `'\r'` or `'\n'`.
 - `Match pattern` is of the format: `<scheme>://<host><path>`.
-  - `<scheme>` can be `'*'`, `'http'` or `'https'`.
+  - `<scheme>` can be `'*'`, `'http'`, `'https'` or `'file'`.
   - `<scheme>` and `<host>` are separated by `'://'`.
-  - `<host>` can be `'*'`, `'*'` followed by part of a `hostname` or a complete `hostname`.
+  - `<host>` can be `'*'` or `'*'` followed by part of a `hostname` or a complete `hostname`.
   - `<host>` is optional if the `<scheme>` is `'file'`.
   - `<path>` must begin with a `'/'`.
   - `<path>` is `URL path` with missing components replaced with `'*'`.
