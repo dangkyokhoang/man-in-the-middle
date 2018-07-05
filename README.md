@@ -48,4 +48,4 @@ One of the `HTTP request method`s, i.e: `'GET'`, `'POST'`, `'HEAD'`, etc. Events
 
 ## Others
 - If you have questions, or need help, feel free to message me at: https://www.facebook.com/dangkyokhoang.
-- If you have future requests, suggestions or you found a bug, raise issues at: https://github.com/dangkyokhoang/Man-in-the-Middle/issues.
+- If you have feature requests, suggestions or you found a bug, raise issues at: https://github.com/dangkyokhoang/Man-in-the-Middle/issues.
