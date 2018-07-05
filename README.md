@@ -18,8 +18,8 @@ JavaScript or CSS code.
 Events will fire only if the event URL matches at least one of the `URL filter`s, or if no `URL filter` presents.
 
 - `URL filter`s, if present, are separated by a `','`.
-- `URL filter` is of `RegExp pattern` or `Filter string`.
-  - An event URL is matched if it matches the `RegExp pattern` or contains the `Filter string`.
+- `URL filter` is of `RegExp pattern` or `filter string`.
+  - An event URL is matched if it matches the `RegExp pattern` or contains the `filter string`.
   - `RegExp pattern` must begin with a `'/'` and end with a `'/'`.
   - `Filter string`, on the other hand, must not.
 
@@ -29,7 +29,7 @@ The frame level in which the content script is injected.
 ### Blocking Rule
 
 #### Match patterns
-Events will fire only if the event URL matches at least one of the `URL filter`s.
+Events will fire only if the event URL matches at least one of the `match pattern`s.
 
 - `Match pattern`s are separated by a `'\r'` or `'\n'`.
 - `Match pattern` is of the format: `<scheme>://<host><path>`.
