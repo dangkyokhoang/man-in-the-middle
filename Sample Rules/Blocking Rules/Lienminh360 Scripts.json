@@ -1,9 +1,0 @@
-[
-  {
-    "matchPatterns": [
-      "http://lienminh360.vn/*js*"
-    ],
-    "urlFilters": [],
-    "method": "GET"
-  }
-]
