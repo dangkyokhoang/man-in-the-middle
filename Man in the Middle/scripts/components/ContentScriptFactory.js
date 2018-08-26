@@ -8,8 +8,7 @@ class ContentScriptFactory extends Factory {
                 code: '',
                 scriptType: 'JavaScript',
                 domEvent: 'completed',
-                urlFilters: [],
-                frameId: 0
+                urlFilters: []
             }, details)
         );
 
@@ -48,10 +47,6 @@ class ContentScriptFactory extends Factory {
                 );
 
                 break;
-            case 'frameId':
-                ruleInstance.setFrameId(
-                    parseInt(value)
-                );
         }
 
         return ruleInstance;
@@ -79,8 +74,7 @@ ContentScriptFactory.defaultRuleData = [{
     '})();',
     scriptType: 'JavaScript',
     domEvent: 'loading',
-    urlFilters: [],
-    frameId: 0
+    urlFilters: []
 }, {
     code: '/* Sample CSS code */ ' +
     'body > div.MitM-Icon {' +
@@ -99,6 +93,5 @@ ContentScriptFactory.defaultRuleData = [{
     '}',
     scriptType: 'CSS',
     domEvent: 'loading',
-    urlFilters: [],
-    frameId: 0
+    urlFilters: []
 }];
