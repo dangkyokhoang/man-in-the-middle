@@ -34,7 +34,17 @@ browser.runtime.onMessage.addListener(async (message, {id}) => {
     return ruleFactory.saveRuleData();
 });
 
-browser.runtime.onInstalled.addListener(({reason}) =>
-    reason === 'update' && Tabs.openOptionsPage());
+browser.runtime.onInstalled.addListener(({reason, previousVersion}) => {
+    if (reason === 'install') {
+        Tabs.openOptionsPage();
+    } else if (reason === 'update') {
+        // Open the options page if it's a functionality update, not a patch
+        // Version format: MAJOR.MINOR.PATCH
+        if (browser.runtime.getManifest().version.split('.').slice(0, 2).toString() !==
+            previousVersion.split('.').slice(0, 2).toString()) {
+            Tabs.openOptionsPage();
+        }
+    }
+});
 
 browser.browserAction.onClicked.addListener(Tabs.openOptionsPage);

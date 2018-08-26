@@ -7,8 +7,7 @@ class ContentScriptCollection extends Collection {
                                  code = '',
                                  scriptType = 'JavaScript',
                                  domEvent = 'completed',
-                                 urlFilters = [],
-                                 frameId = 0
+                                 urlFilters = []
                              }) {
         this.createTextareaGroup({
             parent: ruleElement,
@@ -64,23 +63,6 @@ class ContentScriptCollection extends Collection {
                     value: urlFilters.join(', '),
                     placeholder: 'URL filters'
                 }
-            }
-        });
-
-        this.createSelectGroup({
-            parent: ruleElement,
-            text: 'Frame ID',
-            select: {
-                tagName: 'SELECT',
-                attributes: {
-                    name: 'frameId'
-                },
-                options: [
-                    {value: '0'},
-                    {value: '1'},
-                    {value: '2'}
-                ],
-                selectedValue: frameId.toString()
             }
         });
     }

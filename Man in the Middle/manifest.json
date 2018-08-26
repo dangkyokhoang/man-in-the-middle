@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "Man in the Middle",
-  "version": "2.1.0",
-  "description": "Change the ways web pages work by injecting content scripts and intercepting network requests.",
+  "version": "2.1.1",
+  "description": "Allow user to intercept network requests and inject JavaScript, CSS into web pages.",
   "developer": {
     "name": "Hoàng",
     "url": "https://github.com/dangkyokhoang/Man-in-the-Middle/"

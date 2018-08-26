@@ -10,21 +10,14 @@ class ContentScript extends Rule {
                     code = '',
                     scriptType = 'JavaScript',
                     domEvent = 'completed',
-                    urlFilters = [],
-                    frameId = 0
+                    urlFilters = []
                 }) {
         super();
-
-        this.injectDetails = {
-            code: '',
-            frameId: 0
-        };
 
         this.setCode(code)
             .setScriptType(scriptType)
             .setDOMEvent(domEvent)
-            .setUrlFilters(urlFilters)
-            .setFrameId(frameId);
+            .setUrlFilters(urlFilters);
     }
 
     /**
@@ -32,7 +25,7 @@ class ContentScript extends Rule {
      * @return {ContentScript}
      * */
     setCode(code) {
-        this.injectDetails.code = code;
+        this.code = code;
 
         if (this.isActive()) {
             this.deactivate();
@@ -92,17 +85,6 @@ class ContentScript extends Rule {
     }
 
     /**
-     * @param {number} frameId
-     * @return {ContentScript}
-     * @see {@link https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/webNavigation/onDOMContentLoaded#details}
-     * */
-    setFrameId(frameId) {
-        this.injectDetails.frameId = frameId;
-
-        return this;
-    }
-
-    /**
      * @override
      * @return {ContentScript}
      * */
@@ -110,7 +92,7 @@ class ContentScript extends Rule {
         if (!this.isActive()) {
             this.active = true;
 
-            if (this.injectDetails.code) {
+            if (this.code) {
                 this.navigationEvent.addListener(
                     this.onNavigateCallback,
                     this.filterObject
@@ -142,13 +124,9 @@ class ContentScript extends Rule {
      * @private
      * @param {NavigationEventDetails}
      * */
-    onNavigateCallback({frameId, tabId}) {
-        if (frameId !== this.injectDetails.frameId) {
-            return;
-        }
-
+    onNavigateCallback({tabId, frameId}) {
         try {
-            this.injector(tabId, this.injectDetails);
+            this.injector(tabId, {frameId, code: this.code});
         } catch (error) {
             console.warn(error);
         }
@@ -159,11 +137,10 @@ class ContentScript extends Rule {
      */
     toDataObject() {
         return {
-            code: this.injectDetails.code,
+            code: this.code,
             scriptType: this.scriptType,
             domEvent: this.domEvent,
-            urlFilters: this.urlFilters,
-            frameId: this.injectDetails.frameId
+            urlFilters: this.urlFilters
         }
     }
 
@@ -218,7 +195,6 @@ ContentScript.scriptInjectors = {
  * @property {ScriptTypeString} [scriptType = 'JavaScript']
  * @property {DOMEventString} [domEvent = 'completed']
  * @property {[string]} [urlFilters = []]
- * @property {number} [frameId = 0]
  * */
 
 /**

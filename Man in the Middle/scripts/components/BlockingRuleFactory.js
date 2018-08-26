@@ -6,8 +6,7 @@ class BlockingRuleFactory extends Factory {
         const blockingRule = new this.ruleConstructor(
             Object.assign({
                 requestUrls: [],
-                urlFilters: [],
-                frameId: 0
+                urlFilters: []
             }, details)
         );
 
@@ -39,7 +38,7 @@ class BlockingRuleFactory extends Factory {
                 ruleInstance.setOriginUrlFilters(
                     value
                         .trim()
-                        .split(/\s*[\r\n]\s*/)
+                        .split(/\s*,\s*/)
                         .filter(originUrlFilters => originUrlFilters)
                 );
 
