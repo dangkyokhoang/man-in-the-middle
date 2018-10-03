@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<script>
+    'use strict';
+
+    // Restrict JavaScript codes running inside this sandbox.
+    (() => {
+        // All global objects are deleted, except the following objects.
+        const exceptions = new Set([
+            // Non-configurable
+            'undefined',
+            'window',
+            'document',
+            'location',
+            'top',
+            'eval',
+            'Infinity',
+            'NaN',
+            // Built-in objects
+            'isFinite',
+            'isNaN',
+            'parseFloat',
+            'parseInt',
+            'decodeURI',
+            'decodeURIComponent',
+            'encodeURI',
+            'encodeURIComponent',
+            'Object',
+            'Boolean',
+            'Symbol',
+            'Number',
+            'Math',
+            'Date',
+            'String',
+            'RegExp',
+            'Array',
+            'Int8Array',
+            'Uint8Array',
+            'Uint8ClampedArray',
+            'Int16Array',
+            'Uint16Array',
+            'Int32Array',
+            'Uint32Array',
+            'Float32Array',
+            'Float64Array',
+            'Map',
+            'Set',
+            'WeakMap',
+            'WeakSet',
+            'JSON',
+            'Promise',
+            // Window interface's objects
+            'console',
+            'crypto',
+            'parent',
+            'performance',
+            'atob',
+            'btoa',
+            'fetch',
+            // APIs
+            'XMLHttpRequest',
+        ]);
+
+        Array.prototype.concat.call(
+            Object.getOwnPropertyNames(window),
+            Object.getOwnPropertyNames(EventTarget.prototype)
+        ).forEach(property => (
+            exceptions.has(property) || delete window[property]
+        ));
+    })();
+
+    /**
+     * The <const> keyword is used here to declare function so that
+     *     the function won't become window objects.
+     * @param {InterpreterFunctionDetails} details
+     * @return {Promise}
+     * */
+    const run = async function ({functionBody, args = {}}) {
+        try {
+            // Arguments will be passed to the function via those parameters
+            const params = Object.keys(args);
+            // Restricted global variables
+            const restrictions = [
+                'window',
+                'document',
+                'location',
+                'top',
+                'parent',
+            ].filter(variable => (
+                !params.includes(variable)
+            ));
+
+            return await eval(
+                `async(${params.toString()})=>{` +
+                `let ${restrictions.toString()};` +
+                `${functionBody}}`
+            ).apply(
+                null,
+                params.map(param => args[param])
+            );
+        } catch ({message}) {
+            return Promise.reject(message);
+        }
+    };
+
+    (() => {
+        /**
+         * @param {string} id
+         * @param {boolean} success
+         * @param {Object} response
+         * @return {void}
+         */
+        const sendResponse = (id, success, response) => {
+            parent.postMessage({id, success, response}, '*');
+        };
+
+        addEventListener('message', ({data}) => {
+            const {id, message} = data;
+            run(message).then(
+                result => sendResponse(id, true, result),
+                error => sendResponse(id, false, error)
+            );
+        });
+    })();
+</script>
+</body>
+</html>

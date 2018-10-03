@@ -1,0 +1,38 @@
+{
+  "manifest_version": 2,
+  "name": "Man in the Middle",
+  "version": "2.2.0",
+  "description": "Allow user to intercept network requests and inject JavaScript, CSS into tabs.",
+  "developer": {
+    "name": "Hoàng",
+    "url": "https://github.com/dangkyokhoang/Man-in-the-Middle/"
+  },
+  "applications": {
+    "gecko": {
+      "id": "{ce509397-203a-4f0d-a5b0-927d0d1a0e22}"
+    }
+  },
+  "permissions": [
+    "<all_urls>",
+    "tabs",
+    "storage",
+    "unlimitedStorage",
+    "webNavigation",
+    "webRequest",
+    "webRequestBlocking"
+  ],
+  "icons": {
+    "64": "src/img/icon/mitm_on_64.png"
+  },
+  "browser_action": {
+    "default_icon": {
+      "32": "src/img/icon/mitm_on_32.png"
+    }
+  },
+  "background": {
+    "page": "src/page/background/background.html"
+  },
+  "options_ui": {
+    "page": "src/page/options/options.html"
+  }
+}
