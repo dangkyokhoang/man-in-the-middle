@@ -85,9 +85,14 @@ Rule to inject JavaScript, CSS into tabs.
     ````
 - Type `JavaScript`:
   - `Text headers` is a JavaScript code, more specifically, a function body.
-  - The function body can make use of argument `requestHeaders` or `responseHeaders` which contains existing headers.
-  - The code must `return` an array of objects. Each objects has two properties (case-sensitive): `name` and `value`.
-  - Argument `requestHeaders` or `responseHeaders` has the same format as the return value described above.
+  - The code must `return` an array of objects, each objects has two properties: `name` and `value`.
+  - The code can only access built-in objects and some APIs, which are:
+    - `Object`, `Array`, `String`, `RegExp`, `JSON`, `Map`, `Set`, `Promise`, ...built-in objects;
+    - `isFinite`, `isNaN`, `parseInt`, `parseFloat`;
+    - `encodeURI`, `encodeURIComponent`, `decodeURI`, `decodeURIComponent`;
+    - `crypto`, `performance`, `atob`, `btoa`, `fetch` and `XMLHttpRequest`.
+  - The code may use `requestHeaders` or `responseHeaders` which contains existing headers.
+  - The code may use `await` when performing asynchronous tasks.
   - Examples:
     ```` JavaScript
     // Header type: Request headers
