@@ -111,7 +111,7 @@ article.active > :first-child > label {
 }
 
 article.active > :first-child > input {
-    background-color: #ecffec;
+    background-color: #e0fce0;
 }
 
 article:not(.active) > :not(:first-child),
