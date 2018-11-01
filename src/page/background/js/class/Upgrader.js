@@ -39,6 +39,7 @@ class Upgrader {
         }
         // The extension must be upgraded to be able to write to the database
         if (value === 1) {
+            //noinspection JSUnusedGlobalSymbols
             this.databaseWritable = false;
             return;
         }

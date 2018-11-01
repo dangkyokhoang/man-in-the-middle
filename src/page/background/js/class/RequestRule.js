@@ -4,6 +4,7 @@
 class RequestRule extends Rule {
     /**
      * @abstract
+     * @param {string} url
      * @param {Object} [extraInfo]
      * @return {Object}
      */
