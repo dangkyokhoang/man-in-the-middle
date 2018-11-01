@@ -5,54 +5,64 @@ Get the extension on [addons.mozilla.org](https://addons.mozilla.org/en-US/firef
 ## Rules
 ### Blocking Rule
 Rule to block or redirect requests.  
-- [Match patterns](#match-patterns-required);
+- [Name](#name);
+- [URL filters (Required)](#url-filters);
 - [Redirect URL](#redirect-url);
 - [Origin URL filters](#origin-url-filters);
 - [Method](#method).
 ### Header Rule
 Rule to modify request or response headers.
-- [Text headers](#text-headers-required);
+- [Name](#name);
+- [Text headers (Required)](#text-headers);
 - [Text type](#text-type);
 - [Header type](#header-type);
-- [Match patterns](#match-patterns-required);
+- [URL filters (Required)](#url-filters);
 - [Origin URL filters](#origin-url-filters);
 - [Method](#method).
 ### Content Script
 Rule to inject JavaScript, CSS into tabs.
-- [Code](#code-required);
+- [Name](#name);
+- [Code (Required)](#code);
 - [Script type](#script-type);
 - [DOM event](#dom-event);
 - [URL filters](#url-filters).
-
 ## Properties
-### Match patterns (Required)
-- A request is modified, redirected or canceled if the request URL matches at least one of the `match pattern`s.  
-- `Match pattern`s are separated by a new line `'\r\n'`, `'\r'` or `'\n'`.
-- `Match pattern` is of the format: `<scheme>://<host><path>`.
-  - `<scheme>` can be `'*'`, `'http'`, `'https'` or `'file'`.
-  - `<scheme>` and `<host>` are separated by `'://'`.
-  - `<host>` can be `'*'` or `'*'` followed by part of a `hostname` or a complete `hostname`.
-  - `<host>` is optional if the `<scheme>` is `'file'`.
-  - `<path>` must begin with a `'/'`.
-  - `<path>` is `URL path` with missing components replaced with `'*'`.
-- Examples:
-  ````
-  https://*/ajax/bz*
-  https://*/ajax/mercury/change_read_status*
-  https://*/ajax/mercury/mark_folder_as_read*
-  https://*/ajax/messaging/typ*
-  ````
-  ````
-  https://www.facebook.com/ajax/typeahead/record_basic_metrics*
-  https://www.facebook.com/ufi/typing*
-  ````
-- Rules: [Blocking Rule](#blocking-rule), [Header Rule](#header-rule).
+### Name
+- Any string as the name of the rule.
+- Rule: [Blocking Rule](#blocking-rule), [Header Rule](#header-rule), [Content Script](#content-script).
+### URL filters
+- `URL filter`s are filters to match request URLs or document URLs.
+- A URL is matched if it matches at least one of the filters; or if no filter is set ([Content Script](#content-script) only).
+- `URL filter`s are separated by a comma `','`.
+- `URL filter` is of `RegExp pattern` or `string filter`.
+  - Type `RegExp pattern`:
+    - A `RegExp pattern` begins with a `'/'` and ends with a `'/'`.
+    - Any filter that begins with a `'/'` and ends with a `'/'` is treated as a `RegExp pattern`.
+    - A URL matches the filter if it matches the `RegExp pattern`.
+    - Examples:
+    ````
+    /face\w{4}\.[\w]+/, /anything-that-start-with-a-slash-and-end-with-a-slash/
+    ````
+  - Type `string filter`:
+    - A `string filter` is any string that is not a `RegExp pattern` described above.
+    - A URL matches the filter if it includes the `string filter`.
+    - Examples:
+    ````
+    facebook., anything-that-does-not-start-with-'/'-and-end-with-'/'
+    ````
+- The property [Origin URL filters](#origin-url-filters) has the same writing rule as this property.
+- Rule: [Blocking Rule](#blocking-rule), [Header Rule](#header-rule), [Content Script](#content-script).
 ### Redirect URL
 - If not set, matched requests are canceled (Default).
 - If set, matched requests are redirected to the `redirect URL`.
+- Capturing groups from a [URL filter](#url-filters) type `RegExp pattern` can be used inside `redirect URL` using group number `$x`.
 - Examples:
   ````
-  https://38.media.tumblr.com/tumblr_ldbj01lZiP1qe0eclo1_500.gif
+  (Matched) URL filter: https://www.google.com/
+  Redirect URL: https://38.media.tumblr.com/tumblr_ldbj01lZiP1qe0eclo1_500.gif
+  
+  (Matched) URL filter: /(https://)www.facebook.com(/.*)/
+  Redirect URL: $1SOMEWHERE$2
   ````
 - Rule: [Blocking Rule](#blocking-rule).
 ### Origin URL filters
@@ -67,7 +77,7 @@ Rule to inject JavaScript, CSS into tabs.
 - `Method` can be one of the `HTTP request method`s, i.e: `'GET'`, `'POST'`, `'HEAD'`, etc.
 
 - Rules: [Blocking Rule](#blocking-rule), [Header Rule](#header-rule).
-### Text headers (Required)
+### Text headers
 - Plaintext or JavaScript to modify request or response headers.
 - Type `Plaintext`:
   - `Text header`s are separated by a new line `'\r\n'`, `'\r'` or `'\n'`.
@@ -131,7 +141,7 @@ Rule to inject JavaScript, CSS into tabs.
   - `Request headers`;
   - `Response headers`.
 - Rule: [Header Rule](#header-rule).
-### Code (Required)
+### Code
 - JavaScript or CSS code to inject to documents.
 - Rule: [Content Script](#content-script).
 ### Script type
@@ -146,30 +156,6 @@ Rule to inject JavaScript, CSS into tabs.
   - `Loading`;
   - `Loaded`;
   - `Completed`.
-- Rule: [Content Script](#content-script).
-#### URL filters
-- `URL filter`s are filters to match the documents in which the code is injected.
-- The code is injected if one of the following is satisfied:
-  - No filter is set (Default);
-  - The document URL matches at least one of the filters.
-- `URL filter`s are separated by a comma `','`.
-- `URL filter` is of `RegExp pattern` or `string filter`.
-  - Type `RegExp pattern`:
-    - A `RegExp pattern` begins with a `'/'` and ends with a `'/'`.
-    - Any filter that begins with a `'/'` and ends with a `'/'` is treated as a `RegExp pattern`.
-    - Document URL matches the filter if it matches the `RegExp pattern`.
-    - Examples:
-    ````
-    /face\w{4}\.[\w]+/, /anything-inside-two-slashes/
-    ````
-  - Type `string filter`:
-    - A `string filter` is any string that is not a `RegExp pattern` described above.
-    - Document URL matches the filter if it includes the `string filter`.
-    - Examples:
-    ````
-    facebook., any-thing-that-is-not-inside-'/'-and-'/'
-    ````
-- The property [Origin URL filters](#origin-url-filters) has the same writing rule as this.
 - Rule: [Content Script](#content-script).
 ## Others
 - If you have questions, or need help, feel free to message me at:
