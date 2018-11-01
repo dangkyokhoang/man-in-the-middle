@@ -124,6 +124,7 @@ ContentScript.instances = new Map;
  * @type {ContentScriptDetails}
  */
 ContentScript.detailsDefault = {
+    ...ContentScript.detailsDefault,
     code: '',
     scriptType: 'JavaScript',
     domEvent: 'completed',
@@ -134,6 +135,7 @@ ContentScript.detailsDefault = {
  * @inheritDoc
  */
 ContentScript.setters = {
+    ...ContentScript.setters,
     code: 'setCode',
     scriptType: 'setScriptType',
     domEvent: 'setDOMEvent',
