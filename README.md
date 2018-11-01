@@ -61,8 +61,8 @@ Rule to inject JavaScript, CSS into tabs.
   (Matched) URL filter: https://www.google.com/
   Redirect URL: https://38.media.tumblr.com/tumblr_ldbj01lZiP1qe0eclo1_500.gif
   
-  (Matched) URL filter: /(https://)www.facebook.com(/.*)/
-  Redirect URL: $1SOMEWHERE$2
+  (Matched) URL filter: /^http:(.*)[force-https]?/
+  Redirect URL: https://$1
   ````
 - Rule: [Blocking Rule](#blocking-rule).
 ### Origin URL filters
