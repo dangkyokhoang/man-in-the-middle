@@ -94,7 +94,7 @@ class Factory {
      * @param {string} type
      */
     static saveData(type) {
-        Storage.set({[type]: Factory.getData(type)});
+        Storage.set({[type]: this.getData(type)});
     }
 
     /**
@@ -108,7 +108,24 @@ class Factory {
     }
 
     /**
-     * Rule constructors MUST register with this Factory via this method.
+     * List all rule types.
+     * @return {string[]}
+     */
+    static listTypes() {
+        return [...this.types.keys()];
+    }
+
+    /**
+     * List all instances of a type.
+     * @param {string} type
+     * @return {boolean}
+     */
+    static hasType(type) {
+        return this.types.has(type);
+    }
+
+    /**
+     * Rule constructors MUST register with this factory via this method.
      * @param {string} name
      * @param {Rule} rule
      * @return {void}

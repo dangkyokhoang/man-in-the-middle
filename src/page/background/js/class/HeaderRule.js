@@ -4,11 +4,12 @@
 class HeaderRule extends RequestRule {
     /**
      * Modify request or response headers.
+     * @param {string} url
      * @param {Object} extraInfo
      * @return {Promise<Object<Object[]>>}
      * @see {@link https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/webRequest/onBeforeRequest}
      */
-    requestCallback(extraInfo) {
+    requestCallback(url, extraInfo) {
         return this.blockingResponse(
             this.processHeaders(extraInfo[this.headerType])
         );

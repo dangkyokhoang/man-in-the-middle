@@ -86,6 +86,15 @@ class Rule {
     }
 
     /**
+     * Set the name of the rule.
+     * @param {string} name
+     * @return {void}
+     */
+    setName(name) {
+        this.name = name;
+    }
+
+    /**
      * Remove the rule itself.
      * @return {void}
      */
@@ -106,14 +115,18 @@ Rule.instances = null;
  * Rule details default. <concrete>Children MUST define their own default.
  * @type {Object}
  */
-Rule.detailsDefault = {};
+Rule.detailsDefault = {
+    name: '',
+};
 
 /**
  * Rule property setters. <concrete>Children MUST define their own setters.
  * @protected
  * @type {Object<string>}
  */
-Rule.setters = {};
+Rule.setters = {
+    name: 'setName',
+};
 
 /**
  * @typedef {Object} RuleDetails

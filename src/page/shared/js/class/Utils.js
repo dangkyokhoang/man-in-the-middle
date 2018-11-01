@@ -46,11 +46,11 @@ class Utils {
         const object1Keys = Object.keys(value1);
         const object2Keys = Object.keys(value2);
         // This also applies to array
-        return object1Keys.length === object2Keys.length ?
-            object1Keys.every(key => (
+        return object1Keys.length === object2Keys.length
+            ? object1Keys.every(key => (
                 this.compare(value1[key], value2[key])
-            )) :
-            false;
+            ))
+            : false;
     }
 
     /**
@@ -90,12 +90,26 @@ class Utils {
             // If the URL filter string looks like a RegExp
             // use regular expression matching filter.
             urlFilter.substr(0, 1) === '/' &&
-            urlFilter.substr(-1, 1) === '/' ?
-                {urlMatches: urlFilter.slice(1, -1)} :
-                {urlContains: urlFilter}
+            urlFilter.substr(-1, 1) === '/'
+                ? {urlMatches: urlFilter.slice(1, -1)}
+                : {urlContains: urlFilter}
         ));
 
         return {url};
+    }
+
+    /**
+     * Convert a match pattern to a URL filter.
+     * @param {string} matchPattern
+     */
+    static convertMatchPattern(matchPattern) {
+        const urlFilter = matchPattern !== '*://*/*'
+            ? matchPattern
+                .replace(/\//g, '\\/')
+                .replace(/\*(.)/g, '.*?$1')
+                .replace(/\*$/g, '.*')
+            : '.';
+        return `/${urlFilter}/`;
     }
 
     /**
@@ -105,16 +119,16 @@ class Utils {
      *     or no filter is applied.
      */
     static filterUrl(url, filter) {
-        return filter ?
-            filter.url.some(({urlContains, urlMatches}) => {
+        return filter && filter.url.length
+            ? filter.url.some(({urlContains, urlMatches}) => {
                 if (urlContains) {
                     return url.includes(urlContains);
                 } else if (urlMatches) {
                     return RegExp(urlMatches).test(url);
                 }
                 return false;
-            }) :
-            true;
+            })
+            : true;
     }
 }
 

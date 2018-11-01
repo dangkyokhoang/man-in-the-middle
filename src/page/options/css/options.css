@@ -78,8 +78,6 @@ textarea {
     display: block;
 
     border-radius: 1.5em 1.5em 0 0;
-
-    cursor: pointer;
 }
 
 .multiline-input-group > .textarea-wrapper {
@@ -91,8 +89,7 @@ textarea {
 }
 
 .input-group {
-    width: 500px;
-    max-width: 100%;
+    width: 100%;
 }
 
 .input-group > label {
@@ -108,23 +105,26 @@ textarea {
     border-radius: 0 1.5em 1.5em 0;
 }
 
-article:not(.active) > .multiline-input-group:not(:first-child),
-article:not(.active) > .input-group,
-article:not(.active) label,
-article:not(.active) button {
-    display: none;
-}
-
-article:not(.active) .textarea-wrapper {
-    border-radius: 1.5em;
-
+article.active > :first-child > label {
+    background-color: #7cff7c;
     cursor: pointer;
 }
 
-article:not(.active) textarea {
-    height: 1.5em;
-    min-height: 1.5em;
-    max-height: 1.5em;
+article.active > :first-child > input {
+    background-color: #ecffec;
+}
+
+article:not(.active) > :not(:first-child),
+article:not(.active) label {
+    display: none;
+}
+
+article:not(active) .input-group {
+    cursor: pointer;
+}
+
+article:not(.active) input {
+    border-radius: 1.5em;
 
     /* This makes the whole input group behave like a button */
     pointer-events: none;

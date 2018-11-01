@@ -7,17 +7,17 @@ class RequestRule extends Rule {
      * @param {Object} [extraInfo]
      * @return {Object}
      */
-    requestCallback(extraInfo) {
+    requestCallback(url, extraInfo) {
     }
 
     /**
      * @inheritDoc
      */
     register() {
-        if (this.matchPatterns.length) {
+        if (this.urlFilters.length) {
             this.constructor.requestEvent.addListener(
                 this.filterRequest,
-                {urls: this.matchPatterns},
+                {urls: ['<all_urls>']},
                 this.constructor.extraInfoSpec
             );
         }
@@ -31,24 +31,26 @@ class RequestRule extends Rule {
     }
 
     /**
-     * @param {RequestDetails} details
+     * @param {RequestDetails}
      * @return {(Object|void)}
      */
     filterRequest({method, originUrl, url, ...extraInfo}) {
         if (
             method === this.method &&
-            Utils.filterUrl(originUrl || url, this.urlFilter)
+            Utils.filterUrl(url, this.urlFilter) &&
+            Utils.filterUrl(originUrl || url, this.originUrlFilter)
         ) {
-            return this.requestCallback(extraInfo);
+            return this.requestCallback(url, extraInfo);
         }
     }
 
     /**
-     * @param {string[]} matchPatterns
+     * @param {string[]} urlFilters
      * @return {void}
      */
-    setMatchPatterns(matchPatterns) {
-        this.matchPatterns = matchPatterns;
+    setUrlFilters(urlFilters) {
+        this.urlFilters = urlFilters;
+        this.urlFilter = Utils.createUrlFilters(this.urlFilters);
 
         if (this.enabled) {
             this.disable();
@@ -62,7 +64,7 @@ class RequestRule extends Rule {
      */
     setOriginUrlFilters(originUrlFilters) {
         this.originUrlFilters = originUrlFilters;
-        this.urlFilter = Utils.createUrlFilters(this.originUrlFilters);
+        this.originUrlFilter = Utils.createUrlFilters(this.originUrlFilters);
     }
 
     /**
@@ -80,7 +82,7 @@ class RequestRule extends Rule {
  */
 RequestRule.detailsDefault = {
     ...RequestRule.detailsDefault,
-    matchPatterns: [],
+    urlFilters: [],
     originUrlFilters: [],
     method: 'GET',
 };
@@ -90,7 +92,7 @@ RequestRule.detailsDefault = {
  */
 RequestRule.setters = {
     ...RequestRule.setters,
-    matchPatterns: 'setMatchPatterns',
+    urlFilters: 'setUrlFilters',
     originUrlFilters: 'setOriginUrlFilters',
     method: 'setMethod',
 };
@@ -109,7 +111,8 @@ RequestRule.extraInfoSpec = ['blocking'];
 
 /**
  * @typedef {RuleDetails} RequestRuleDetails
- * @property {string[]} [matchPatterns]
+ * @property {string[]} [urlFilters]
+ * @property {string[]} [matchPatterns] Deprecated since version 3.
  * @property {string[]} [originUrlFilters]
  * @property {RequestMethod} [method]
  */

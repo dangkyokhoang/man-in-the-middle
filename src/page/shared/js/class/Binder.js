@@ -81,9 +81,9 @@ class Binder {
      *     the filters or no filter is applied.
      */
     static filter(method, filters) {
-        return filters && filters.length ?
-            filters.some(({methodEquals}) => method === methodEquals) :
-            true;
+        return filters && filters.length
+            ? filters.some(({methodEquals}) => method === methodEquals)
+            : true;
     }
 }
 

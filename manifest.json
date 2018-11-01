@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "Man in the Middle",
-  "version": "2.2.0",
-  "description": "Allow user to intercept network requests and inject JavaScript, CSS into tabs.",
+  "version": "3.0.0",
+  "description": "Allow user to block or redirect requests, modify request headers and body, inject JavaScript and CSS into pages.",
   "developer": {
     "name": "Hoàng",
     "url": "https://github.com/dangkyokhoang/Man-in-the-Middle/"

@@ -4,14 +4,15 @@
 class BlockingRule extends RequestRule {
     /**
      * Block or redirect requests.
+     * @param {string} url
      * @param {Object} extraInfo
      * @return {browser.webRequest.BlockingResponse}
      * @see {@link https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/webRequest/onBeforeRequest}
      */
-    async requestCallback(extraInfo) {
+    async requestCallback(url, extraInfo) {
         // If redirect URL is set, redirect the request to the URL.
         // Otherwise, cancel the request.
-        const redirectUrl = this.redirectUrl;
+        const redirectUrl = this.expressRedirectUrl(url);
         return redirectUrl ? {redirectUrl} : {cancel: true};
     }
 
@@ -21,6 +22,26 @@ class BlockingRule extends RequestRule {
      */
     setRedirectUrl(redirectUrl) {
         this.redirectUrl = redirectUrl;
+    }
+
+    /**
+     * @param {string} url
+     * @return {string}
+     */
+    expressRedirectUrl(url) {
+        if (!this.redirectUrl) {
+            return '';
+        }
+
+        const matchedRegExpFilter = this.urlFilter.url.find(({urlMatches}) => (
+            RegExp(urlMatches).test(url)
+        ));
+        return matchedRegExpFilter
+            ? url.replace(
+                RegExp(matchedRegExpFilter.urlMatches),
+                this.redirectUrl
+            )
+            : this.redirectUrl;
     }
 }
 

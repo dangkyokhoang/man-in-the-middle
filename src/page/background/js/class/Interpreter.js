@@ -3,7 +3,7 @@
  */
 class Interpreter {
     /**
-     * @param {InterpreterFunctionDetails} details
+     * @param {InterpreterFunctionDetails}
      * @return {Promise}
      */
     static run(details) {

@@ -65,6 +65,23 @@ class Collection {
                 [tagName === 'SELECT' ? 'selection' : 'text']: text,
                 ...input
             });
+
+            if (property === 'name') {
+                // Clicking textarea group activates or deactivates its parent
+                element[property].container.addEventListener(
+                    'click',
+                    ({target}) => {
+                        if (DOM.isActive(parent)) {
+                            if (target.tagName === 'LABEL') {
+                                DOM.deactivate(parent);
+                            }
+                        } else {
+                            DOM.activate(parent);
+                            element[property].input.focus();
+                        }
+                    }
+                );
+            }
             // On input change, modify the rule property.
             element[property].input.addEventListener('change', ({target}) => {
                 const text = target.value;
@@ -181,7 +198,7 @@ class Collection {
     /**
      * Convert property value to string.
      * @private
-     * @param {Object} details
+     * @param {Object}
      * @return {string}
      */
     static toText({value, tagName, valueType}) {
@@ -198,19 +215,19 @@ class Collection {
     /**
      * Convert string to property value.
      * @private
-     * @param {Object} details
+     * @param {Object}
      * @return {(string[]|string)}
      */
     static toValue({text, tagName, valueType}) {
         switch (tagName) {
             case 'TEXTAREA':
-                return valueType === 'array' ?
-                    text.trim().split(/\s*[\r\n]\s*/) :
-                    text;
+                return valueType === 'array'
+                    ? text.trim().split(/\s*[\r\n]\s*/)
+                    : text;
             case 'INPUT':
-                return valueType === 'array' ?
-                    text.trim().split(/\s*,\s*/).filter(Boolean) :
-                    text;
+                return valueType === 'array'
+                    ? text.trim().split(/\s*,\s*/).filter(Boolean)
+                    : text;
             case 'SELECT':
                 return text;
         }
@@ -225,20 +242,23 @@ Binder.bind(Collection);
  */
 Collection.types = {
     blockingRules: [
-        'matchPatterns',
+        'name',
+        'urlFilters',
         'redirectUrl',
         'originUrlFilters',
         'method',
     ],
     headerRules: [
+        'name',
         'textHeaders',
         'textType',
         'headerType',
-        'matchPatterns',
+        'urlFilters',
         'originUrlFilters',
         'method',
     ],
     contentScripts: [
+        'name',
         'code',
         'scriptType',
         'domEvent',
@@ -262,18 +282,26 @@ Collection.elements = {};
  */
 Collection.guide = {
     // Request rule
-    matchPatterns: {
+    name: {
+        valueType: 'string',
+        input: {
+            tagName: 'INPUT',
+            label: 'Name',
+            placeholder: 'Rule name',
+        }
+    },
+    urlFilters: {
         valueType: 'array',
         input: {
             tagName: 'TEXTAREA',
-            label: 'Match patterns',
-            placeholder: 'URL patterns to match (Required)',
+            label: 'URL filters',
+            placeholder: 'URL filters',
         },
     },
     originUrlFilters: {
         valueType: 'array',
         input: {
-            tagName: 'INPUT',
+            tagName: 'TEXTAREA',
             label: 'Origin URL filters',
             placeholder: 'Origin URL filters',
         },
@@ -367,15 +395,6 @@ Collection.guide = {
             },
         },
     },
-    urlFilters: {
-        valueType: 'array',
-        input: {
-            tagName: 'INPUT',
-            label: 'URL filters',
-            placeholder: 'URL filters',
-        },
-    },
 };
 
 addEventListener('DOMContentLoaded', Collection.prepare, true);
-s

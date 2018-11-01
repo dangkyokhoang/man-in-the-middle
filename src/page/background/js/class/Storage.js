@@ -12,13 +12,19 @@ class Storage {
 
     /**
      * @param {!Object} keys
+     * @param {boolean} [silent]
      * @return {void}
      */
-    static set(keys) {
+    static set(keys, silent = true) {
+        if (!Upgrader.databaseWritable) {
+            return;
+        }
+
         browser.storage.sync.set(keys).catch(console.warn);
 
-        // Remember this change
-        this.changeHistory.push(Object.entries(keys));
+        // If 'silent' is set to true,
+        // changes made won't trigger storage-changed events.
+        silent && this.changeHistory.push(Object.entries(keys));
     }
 
     /**

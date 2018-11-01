@@ -48,7 +48,7 @@ class DOM {
 
     /**
      * Create a textarea element group.
-     * @param {TextareaGroupDetails} details
+     * @param {TextareaGroupDetails}
      * @return {Object<HTMLElement>}
      */
     static createTextareaGroup({label, parent, text, placeholder}) {
@@ -71,23 +71,12 @@ class DOM {
             ]
         });
 
-        // Clicking textarea group activates or deactivates its parent
-        container.addEventListener('click', ({target}) => {
-            if (this.isActive(parent)) {
-                if (target.tagName === 'LABEL') {
-                    this.deactivate(parent);
-                }
-            } else {
-                this.activate(parent);
-            }
-        });
-
         return {container, input: textarea};
     }
 
     /**
      * Create an input element group.
-     * @param {InputGroupDetails} details
+     * @param {InputGroupDetails}
      * @return {Object<HTMLElement>}
      */
     static createInputGroup({label, parent, text, placeholder}) {
@@ -110,14 +99,14 @@ class DOM {
 
     /**
      * Create a select element group.
-     * @param {SelectGroupDetails} details
+     * @param {SelectGroupDetails}
      * @return {Object<HTMLElement>}
      */
     static createSelectGroup({label, parent, options, selection}) {
         const select = this.createNode({
             tagName: 'SELECT',
-            children: options ?
-                Object.entries(options).map(([value, text]) => {
+            children: options
+                ? Object.entries(options).map(([value, text]) => {
                     return {
                         tagName: 'OPTION',
                         attributes: {
@@ -126,8 +115,8 @@ class DOM {
                         },
                         children: [{text}]
                     };
-                }) :
-                []
+                })
+                : []
         });
         const container = this.createNode({
             tagName: 'DIV',
