@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * Generate universally unique identifiers.
  */
@@ -10,24 +12,27 @@ class UUID {
     static generate() {
         const time = this.timeOrigin + Math.floor(performance.now() * 1e6);
         // Since collisions may occur only if two UUIDs are generated
-        //     at a same time, i.e., within a same timestamp of time,
+        //     at the same time, i.e., within a same timestamp of time,
         // the exception list should be cleared on timestamp change.
         if (time > this.context.time) {
             this.context.time = time;
             this.context.exceptions.clear();
         }
 
-        const uintArray = new Uint32Array(2);
         let uuid;
+        const uintArray = new Uint32Array(2);
         do {
             crypto.getRandomValues(uintArray);
-            uuid = time.toString(16) +
-                uintArray[0].toString(16).padStart(8, '0') +
-                uintArray[1].toString(16).padStart(8, '0');
+
+            uuid = time.toString(16)
+                + uintArray[0].toString(16).padStart(8, '0')
+                + uintArray[1].toString(16).padStart(8, '0');
             uuid = uuid.replace(
                 /^(\w+)(\w{4})(\w{4})(\w{4})(\w{12})$/,
                 '{$1-$2-$3-$4-$5}'
             );
+            // If the UUID already exists,
+            // re-generate a new UUID.
         } while (this.context.exceptions.has(uuid));
 
         // Add the generated UUID to the exception list
@@ -40,8 +45,8 @@ class UUID {
 Binder.bind(UUID);
 
 /**
- * Due to security concerns, browser might round performance.now() results,
- *     which affects the uniqueness of the generated UUIDs.
+ * Due to security concerns, browser might round 'performance.now()' results,
+ *     which affects the uniqueness of UUIDs.
  * This is a workaround to make sure UUIDs are unique.
  * @type {Object}
  * @property {Set<string>} exceptions

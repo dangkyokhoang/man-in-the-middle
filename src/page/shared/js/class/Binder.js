@@ -8,37 +8,33 @@ class Binder {
     /**
      * Bind all methods of an object.
      * @param {!Object} object
-     * @param {BinderFilter[]} [filters]
      * @return {void}
      */
-    static bind(object, filters) {
-        this.bindOwn(object, filters);
-        this.bindAncestors(object, filters);
+    static bind(object) {
+        this.bindOwn(object);
+        this.bindAncestors(object);
     }
 
     /**
      * @param {!Object} object
-     * @param {BinderFilter[]} [filters]
      * @return {void}
      */
-    static bindOwn(object, filters) {
-        this.getMethods(object, filters)
-            .forEach(method => {
-                object[method] = object[method].bind(object)
-            });
+    static bindOwn(object) {
+        this.getMethods(object).forEach(method => {
+            object[method] = object[method].bind(object);
+        });
     }
 
     /**
      * @param {!Object} object
-     * @param {BinderFilter[]} [filters]
      * @return {void}
      */
-    static bindAncestors(object, filters) {
+    static bindAncestors(object) {
         let ancestor = Object.getPrototypeOf(object);
 
-        // Doesn't bind function and {} prototypes
+        // Function and {} prototypes are not bound
         while (!this.exceptions.has(ancestor)) {
-            this.bindOtherOwn(object, ancestor, filters);
+            this.bindOtherOwn(object, ancestor);
             ancestor = Object.getPrototypeOf(ancestor);
         }
     }
@@ -46,55 +42,36 @@ class Binder {
     /**
      * @param {!Object} object
      * @param {!Object} other
-     * @param {BinderFilter[]} [filters]
      * @return {void}
      */
-    static bindOtherOwn(object, other, filters) {
-        this.getMethods(other, filters)
-            .forEach(method => {
-                if (!object.hasOwnProperty(method)) {
-                    object[method] = other[method].bind(object);
-                }
-            });
+    static bindOtherOwn(object, other) {
+        this.getMethods(other).forEach(method => {
+            if (!object.hasOwnProperty(method)) {
+                object[method] = other[method].bind(object);
+            }
+        });
     }
 
     /**
      * Get all method names of an object.
      * @param {!Object} object
-     * @param {BinderFilter[]} [filters]
      * @return {string[]}
      */
-    static getMethods(object, filters) {
-        return Object.getOwnPropertyNames(object)
-            .filter(property => (
-                property !== 'constructor' &&
-                typeof object[property] === 'function' &&
-                this.filter(property, filters)
-            ));
-    }
-
-    /**
-     * @private
-     * @param {string} method
-     * @param {BinderFilter[]} [filters]
-     * @return {boolean} True if the method name satisfies at least one of
-     *     the filters or no filter is applied.
-     */
-    static filter(method, filters) {
-        return filters && filters.length
-            ? filters.some(({methodEquals}) => method === methodEquals)
-            : true;
+    static getMethods(object) {
+        return Object.getOwnPropertyNames(object).filter(property => (
+            typeof object[property] === 'function'
+            && property !== 'constructor'
+        ));
     }
 }
 
+/**
+ * @type {Set}
+ * @see {Binder.bindAncestors}
+ */
 Binder.exceptions = new Set([
     Object.getPrototypeOf(() => {
     }),
     Object.getPrototypeOf({}),
     null
 ]);
-
-/**
- * @typedef {Object} BinderFilter
- * @property {string} methodEquals
- */

@@ -1,0 +1,107 @@
+label {
+    padding: 0.75em 1.25em;
+}
+
+input,
+select,
+button {
+    border-radius: 1.5em;
+    padding: 0.75em 1.25em;
+    background-color: var(--gray-1);
+}
+
+textarea {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    min-height: 4.5em;
+    background-color: inherit;
+}
+
+.input,
+.multiline-input {
+    display: flex;
+}
+
+.input > label,
+.multiline-input > label {
+    background-color: var(--gray-0);
+}
+
+.input {
+    width: 100%;
+}
+
+.input > label {
+    border-radius: 1.5em 0 0 1.5em;
+    white-space: nowrap;
+}
+
+.input > input,
+.input > select {
+    flex-grow: 1;
+    border-radius: 0 1.5em 1.5em 0;
+}
+
+.multiline-input {
+    flex-direction: column;
+}
+
+.multiline-input > label {
+    display: block;
+    border-radius: 1.5em 1.5em 0 0;
+}
+
+.textarea {
+    margin: 0;
+    border-radius: 0 0 1.5em 1.5em;
+    padding: 0.75em 1.25em;
+    background-color: var(--gray-1);
+}
+
+.switch {
+    /* Just like a button */
+    display: inline-block;
+    position: relative;
+    width: 7.5em;
+}
+
+.switch > input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 1.5em;
+    background-color: var(--yellow-0);
+    cursor: pointer;
+}
+
+.slider:before {
+    position: absolute;
+    content: 'Disabled';
+    left: 0.25em;
+    bottom: 0.25em;
+    width: 3.75em;
+    border-radius: 1.25em;
+    padding: 0.5em 1em;
+    background-color: var(--yellow-1);
+    text-align: center;
+    transition: transform 0.25s ease-out;
+}
+
+input:checked + .slider {
+    background-color: var(--green-0);
+}
+
+input:checked + .slider:before {
+    content: 'Enabled';
+    background-color: var(--green-1);
+    transform: translateX(1.25em);
+}

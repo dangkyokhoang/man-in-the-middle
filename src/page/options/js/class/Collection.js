@@ -1,31 +1,33 @@
+'use strict';
+
+/**
+ * Create and organize rule elements.
+ */
 class Collection {
     /**
-     * Initialize rules by types.
-     * If no types are specified, initialize all types of rules.
+     * Initialize rule elements by types.
+     * If no type is specified, initialize all types of rules.
      * @param {(string[]|string|void)} [types]
      * @param {Object} [data]
      * @return {Promise<void>}
      */
-    static async initialize(types = Object.keys(this.types), data) {
+    static async initialize(types = this.getTypes(), data) {
         if (Array.isArray(types)) {
-            return types.forEach(type => {
+            types.forEach(type => {
                 this.initialize(type, data ? data[type] : null);
             });
+            return;
         }
 
         // String
         const type = types;
-        // Remove all existing rule elements of this type
-        [...this.elements[type].keys()].forEach(id => {
-            this.removeElement(type, id);
-        });
-        // Create new rule elements
-        data = data || await Runtime.sendMessage({
-            sender: 'optionsPage',
-            request: 'get',
-            details: {type}
-        });
-        data.forEach(details => this.create(type, details));
+
+        // Remove existing rule elements of this type
+        this.getRules(type).forEach(id => this.removeItem(type, id));
+
+        // Create new elements
+        data = data || await this.getData(type);
+        data && data.forEach(details => this.create(type, details));
     }
 
     /**
@@ -35,74 +37,124 @@ class Collection {
      * @return {HTMLElement}
      */
     static create(type, details) {
-        const {id} = details;
+        const {id, enabled} = details;
 
-        // Create rule element
+        // Create rule wrapper element
         const parent = DOM.createNode({
             tagName: 'ARTICLE',
-            parent: this.containers[type]
+            parent: this.containers[type],
+            classList: enabled ? ['enabled'] : null,
         });
 
-        // Rule element info
-        const element = {
-            container: parent,
-        };
-        this.elements[type].set(id, element);
-
-        // Create input elements for the rule element
+        // Sequentially create input elements for rule properties
         for (const property of this.types[type]) {
-            if (!this.guide.hasOwnProperty(property)) {
+            // Only display properties in the instructions
+            if (!this.instructions.hasOwnProperty(property)) {
                 continue;
             }
 
-            const {valueType, input} = this.guide[property];
-            const {tagName} = input;
             const value = details[property];
-            const text = this.toText({value, tagName, valueType});
+            const {valueType, input} = this.instructions[property];
+            const {tagName} = input;
+            const domValue = this.toDomValue({value, tagName, valueType});
 
-            element[property] = DOM.getInputBuilder(tagName)({
-                parent,
-                [tagName === 'SELECT' ? 'selection' : 'text']: text,
-                ...input
-            });
+            const element = DOM.buildInput({parent, input, domValue});
 
             if (property === 'name') {
-                // Clicking textarea group activates or deactivates its parent
-                element[property].container.addEventListener(
-                    'click',
-                    ({target}) => {
-                        if (DOM.isActive(parent)) {
-                            if (target.tagName === 'LABEL') {
-                                DOM.deactivate(parent);
-                            }
-                        } else {
-                            DOM.activate(parent);
-                            element[property].input.focus();
+                // Clicking textarea group activates or deactivates the item
+                element.container.addEventListener('click', ({target}) => {
+                    if (DOM.isActive(parent)) {
+                        if (target.tagName === 'LABEL') {
+                            DOM.deactivate(parent);
                         }
+                    } else {
+                        DOM.activate(parent);
+                        element.input.focus();
                     }
-                );
+                });
             }
-            // On input change, modify the rule property.
-            element[property].input.addEventListener('change', ({target}) => {
-                const text = target.value;
+
+            if (property === 'enabled') {
+                element.input.addEventListener('change', ({target}) => {
+                    if (DOM.value(target) === 'enabled') {
+                        DOM.enable(parent);
+                    } else {
+                        DOM.disable(parent);
+                    }
+                });
+            }
+
+            // On input change,
+            // tell the background script to modify rule property.
+            element.input.addEventListener('change', ({target}) => {
                 this.modify(type, id, {
-                    [property]: this.toValue({text, tagName, valueType})
+                    [property]: this.toPropertyValue({
+                        domValue: DOM.value(target),
+                        tagName,
+                        valueType,
+                    }),
                 });
             });
         }
 
-        // Create remove button for the rule element
-        DOM.createNode({
-            tagName: 'BUTTON',
+        // Create remove button for the rule item
+        const button = DOM.createButton({
             parent,
-            classList: ['highlight-error'],
-            children: [{text: 'Remove'}]
-        }).addEventListener('dblclick', () => {
-            this.remove(type, id);
+            text: 'Remove',
+            highlight: ['highlight-error'],
         });
+        button.button.addEventListener('dblclick', () => this.remove(type, id));
 
-        // The rule element
+        // Add the rule item to the collection
+        this.items[type].set(id, parent);
+
         return parent;
+    }
+
+    /**
+     * Convert property value to DOM value.
+     * @private
+     * @param {Object}
+     * @return {string|null}
+     */
+    static toDomValue({value, tagName, valueType}) {
+        switch (tagName) {
+            case 'TEXTAREA':
+                return valueType === 'string' ? value : value.join('\n');
+            case 'INPUT':
+                return valueType === 'string' ? value : value.join(', ');
+            case 'SELECT':
+                return value;
+            case 'SWITCH':
+                return value ? '' : null;
+        }
+    }
+
+    /**
+     * Convert DOM value to property value.
+     * @private
+     * @param {Object}
+     * @return {(string[]|string)}
+     */
+    static toPropertyValue({domValue, tagName, valueType}) {
+        switch (tagName) {
+            case 'TEXTAREA':
+                if (valueType === 'string') {
+                    return domValue;
+                }
+                return domValue.trim().split(/\s*[\r\n]\s*/).filter(Boolean);
+            case 'INPUT':
+                if (valueType === 'string') {
+                    return domValue;
+                }
+                return domValue.trim().split(/\s*,\s*/).filter(Boolean);
+            case 'SELECT':
+                // Always be text
+                return domValue;
+            case 'SWITCH':
+                // Always be boolean
+                return domValue === 'enabled';
+        }
     }
 
     /**
@@ -115,10 +167,9 @@ class Collection {
             sender: 'optionsPage',
             request: 'add',
             details: {type},
-        }).then(
-            details => DOM.activate(this.create(type, details)),
-            console.warn
-        );
+        }).then(details => {
+            DOM.activate(this.create(type, details));
+        });
     }
 
     /**
@@ -132,10 +183,20 @@ class Collection {
             sender: 'optionsPage',
             request: 'remove',
             details: {type, id},
-        }).then(
-            () => this.removeElement(type, id),
-            console.warn
-        );
+        }).then(() => {
+            this.removeItem(type, id);
+        });
+    }
+
+    /**
+     * Remove the rule item from the item collection.
+     * @param {string} type
+     * @param {string} id
+     * @return {void}
+     */
+    static removeItem(type, id) {
+        this.items[type].get(id).remove();
+        this.items[type].delete(id);
     }
 
     /**
@@ -150,87 +211,67 @@ class Collection {
             sender: 'optionsPage',
             request: 'modify',
             details: {type, id, change},
-        }).catch(
-            console.warn
-        );
+        });
     }
 
     /**
+     * Get rule data from the background script.
      * @param {string} type
-     * @param {string} id
-     * @return {void}
+     * @return {Promise}
      */
-    static removeElement(type, id) {
-        this.elements[type].get(id).container.remove();
-        this.elements[type].delete(id);
+    static getData(type) {
+        return Runtime.sendMessage({
+            sender: 'optionsPage',
+            request: 'getData',
+            details: {type},
+        });
+    }
+
+    /**
+     * Get existing rule IDs of a type.
+     * @param {string} type
+     * @return {string[]}
+     */
+    static getRules(type) {
+        return [...this.items[type].keys()];
+    }
+
+    /**
+     * Get rule types.
+     * @return {string[]}
+     */
+    static getTypes() {
+        return Object.keys(this.types);
     }
 
     /**
      * Create rule containers and add buttons on register.
      * @return {void}
      */
-    static prepare() {
+    static startup() {
         // For each type of rule
-        Object.keys(this.types).forEach(type => {
+        this.getTypes().forEach(type => {
             const section = DOM.id(type);
 
             // Create container
             this.containers[type] = DOM.createNode({
                 tagName: 'SECTION',
-                parent: section
+                parent: section,
             });
 
             // Create add button
-            DOM.createNode({
-                tagName: 'BUTTON',
+            const button = DOM.createButton({
                 parent: section,
-                classList: ['highlight-ok'],
-                children: [{text: 'Add'}]
-            }).addEventListener('click', () => {
-                this.add(type);
+                text: 'Add',
+                highlight: ['highlight-ok'],
             });
+            button.button.addEventListener('click', () => this.add(type));
 
             // Create a map to store created rule elements.
-            this.elements[type] = new Map;
+            this.items[type] = new Map;
         });
-    }
 
-    /**
-     * Convert property value to string.
-     * @private
-     * @param {Object}
-     * @return {string}
-     */
-    static toText({value, tagName, valueType}) {
-        switch (tagName) {
-            case 'TEXTAREA':
-                return valueType === 'array' ? value.join('\n') : value;
-            case 'INPUT':
-                return valueType === 'array' ? value.join(', ') : value;
-            case 'SELECT':
-                return value;
-        }
-    }
-
-    /**
-     * Convert string to property value.
-     * @private
-     * @param {Object}
-     * @return {(string[]|string)}
-     */
-    static toValue({text, tagName, valueType}) {
-        switch (tagName) {
-            case 'TEXTAREA':
-                return valueType === 'array'
-                    ? text.trim().split(/\s*[\r\n]\s*/)
-                    : text;
-            case 'INPUT':
-                return valueType === 'array'
-                    ? text.trim().split(/\s*,\s*/).filter(Boolean)
-                    : text;
-            case 'SELECT':
-                return text;
-        }
+        this.initialize();
     }
 }
 
@@ -244,9 +285,10 @@ Collection.types = {
     blockingRules: [
         'name',
         'urlFilters',
+        'method',
         'redirectUrl',
         'originUrlFilters',
-        'method',
+        'enabled',
     ],
     headerRules: [
         'name',
@@ -254,56 +296,68 @@ Collection.types = {
         'textType',
         'headerType',
         'urlFilters',
-        'originUrlFilters',
         'method',
+        'originUrlFilters',
+        'enabled',
+    ],
+    responseRules: [
+        'name',
+        'textResponse',
+        'textType',
+        'urlFilters',
+        'method',
+        'originUrlFilters',
+        'enabled',
     ],
     contentScripts: [
         'name',
         'code',
         'scriptType',
-        'domEvent',
         'urlFilters',
+        'domEvent',
+        'originUrlFilters',
+        'enabled',
     ],
 };
 
 /**
+ * Rule containers.
  * @type {Object<HTMLElement>}
  */
 Collection.containers = {};
 
 /**
+ * Store all rule items.
  * @type {Object<Map<string, Object>>}
  */
-Collection.elements = {};
+Collection.items = {};
 
 /**
- * Guide on how to display rule properties.
+ * Instructions to display rule properties.
  * @type {Object}
  */
-Collection.guide = {
-    // Request rule
+Collection.instructions = {
+    // RequestRule
     name: {
         valueType: 'string',
         input: {
             tagName: 'INPUT',
             label: 'Name',
             placeholder: 'Rule name',
-        }
+        },
+    },
+    enabled: {
+        valueType: 'boolean',
+        input: {
+            tagName: 'SWITCH',
+        },
     },
     urlFilters: {
         valueType: 'array',
         input: {
             tagName: 'TEXTAREA',
-            label: 'URL filters',
-            placeholder: 'URL filters',
-        },
-    },
-    originUrlFilters: {
-        valueType: 'array',
-        input: {
-            tagName: 'TEXTAREA',
-            label: 'Origin URL filters',
-            placeholder: 'Origin URL filters',
+            label: 'URL filters (Required)',
+            placeholder: 'String or /RegExp/ to filter URLs (Required)',
         },
     },
     method: {
@@ -323,7 +377,15 @@ Collection.guide = {
             },
         },
     },
-    // Blocking rule
+    originUrlFilters: {
+        valueType: 'array',
+        input: {
+            tagName: 'INPUT',
+            label: 'Origin URL filters',
+            placeholder: 'Origin URL filters',
+        },
+    },
+    // BlockingRule
     redirectUrl: {
         valueType: 'string',
         input: {
@@ -332,12 +394,12 @@ Collection.guide = {
             placeholder: 'URL to redirect to or blank to block',
         },
     },
-    // Header rule
+    // HeaderRule
     textHeaders: {
         valueType: 'string',
         input: {
             tagName: 'TEXTAREA',
-            label: 'Text headers',
+            label: 'Text headers (Required)',
             placeholder: 'Plaintext or JavaScript to modify headers (Required)',
         },
     },
@@ -363,12 +425,21 @@ Collection.guide = {
             },
         },
     },
-    // Content script
+    // ResponseRule
+    textResponse: {
+        valueType: 'string',
+        input: {
+            tagName: 'TEXTAREA',
+            label: 'Text response (Required)',
+            placeholder: 'Plaintext or JavaScript to modify response body (Required)',
+        },
+    },
+    // ContentScript
     code: {
         valueType: 'string',
         input: {
             tagName: 'TEXTAREA',
-            label: 'Code',
+            label: 'Code (Required)',
             placeholder: 'JavaScript or CSS as content script (Required)',
         },
     },
@@ -396,5 +467,3 @@ Collection.guide = {
         },
     },
 };
-
-addEventListener('DOMContentLoaded', Collection.prepare, true);

@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * Rule skeleton.
  * @abstract
@@ -15,15 +17,15 @@ class Rule {
          * @type {string}
          */
         this.id = details && details.id ? details.id : UUID.generate();
+
         /**
-         * This tells whether this rule is active.
          * @protected
          * @type {boolean}
          */
-        this.enabled = false;
+        this.active = false;
 
-        this.update({...this.constructor.detailsDefault, ...details});
-        this.enable();
+        this.update({...this.constructor.default, ...details});
+        this.activate();
 
         this.constructor.instances.set(this.id, this);
     }
@@ -48,26 +50,26 @@ class Rule {
     /**
      * @return {void}
      */
-    enable() {
-        if (!this.enabled) {
+    activate() {
+        if (this.enabled && !this.active) {
             this.register();
-            this.enabled = true;
+            this.active = true;
         }
     }
 
     /**
      * @return {void}
      */
-    disable() {
-        if (this.enabled) {
+    deactivate() {
+        if (this.active) {
             this.unregister();
-            this.enabled = false;
+            this.active = false;
         }
     }
 
     getDetails() {
         const details = {id: this.id};
-        Object.keys(this.constructor.detailsDefault).forEach(key => {
+        Object.keys(this.constructor.default).forEach(key => {
             details[key] = this[key];
         });
         return details;
@@ -86,7 +88,6 @@ class Rule {
     }
 
     /**
-     * Set the name of the rule.
      * @param {string} name
      * @return {void}
      */
@@ -95,40 +96,93 @@ class Rule {
     }
 
     /**
+     * Enable or disable the current rule.
+     * @param {boolean} enabled
+     */
+    setEnabled(enabled) {
+        // If the property 'enabled' doesn't exist,
+        // it means the rule is being initialized,
+        // then don't activate the rule at the moment.
+        const isInitialized = this.hasOwnProperty('enabled');
+
+        this.enabled = enabled;
+
+        if (isInitialized) {
+            this.enabled ? this.activate() : this.deactivate();
+        }
+    }
+
+    /**
+     * @param {string[]} urlFilters
+     * @return {void}
+     */
+    setUrlFilters(urlFilters) {
+        this.urlFilters = urlFilters;
+        this.urlFilter = Utils.createUrlFilter(this.urlFilters);
+
+        if (this.active) {
+            this.deactivate();
+            this.activate();
+        }
+    }
+
+    /**
+     * @param {string[]} originUrlFilters
+     * @return {void}
+     */
+    setOriginUrlFilters(originUrlFilters) {
+        this.originUrlFilters = originUrlFilters;
+        this.originUrlFilter = Utils.createUrlFilter(this.originUrlFilters);
+    }
+
+    /**
      * Remove the rule itself.
      * @return {void}
      */
     remove() {
-        this.disable();
+        this.deactivate();
         this.constructor.instances.delete(this.id);
     }
 }
 
 /**
- * A map of created rule instances. <concrete>Children MUST have their own map.
+ * A map of created rule instances.
+ * <concrete>Children MUST have their own map.
  * @protected
  * @type {Map<string, Rule>}
  */
 Rule.instances = null;
 
 /**
- * Rule details default. <concrete>Children MUST define their own default.
+ * Rule default details.
+ * Children MUST inherit default details.
  * @type {Object}
  */
-Rule.detailsDefault = {
+Rule.default = {
     name: '',
+    enabled: true,
+    urlFilters: [],
+    originUrlFilters: [],
 };
 
 /**
- * Rule property setters. <concrete>Children MUST define their own setters.
+ * Rule property setters.
+ * Children MUST inherit setters.
  * @protected
  * @type {Object<string>}
  */
 Rule.setters = {
     name: 'setName',
+    enabled: 'setEnabled',
+    urlFilters: 'setUrlFilters',
+    originUrlFilters: 'setOriginUrlFilters',
 };
 
 /**
  * @typedef {Object} RuleDetails
  * @property {string} [id]
+ * @property {string} [name]
+ * @propẻty {boolean} [enabled]
+ * @property {string[]} [urlFilters]
+ * @property {string[]} [originUrlFilters]
  */

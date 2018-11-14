@@ -1,39 +1,45 @@
+'use strict';
+
+/**
+ * Give ability to do any rule-related tasks.
+ */
 class Factory {
     /**
+     * Rule constructors MUST be registered with the factory via this method.
+     * @param {string} type
+     * @param {Object} constructor
+     * @return {void}
+     */
+    static register(type, constructor) {
+        this.types.set(type, constructor);
+    }
+
+    /**
      * Initialize rule instances by types.
-     * If no types are specified, initialize all types of rules.
+     * If no type is specified, initialize all types of rules.
      * @param {(string[]|string|void)} [types]
      * @param {Object} [data]
      * @return {Promise<void>}
      */
-    static async initialize(types = [...this.types.keys()], data) {
+    static async initialize(types = this.getTypes(), data) {
         if (Array.isArray(types)) {
-            return types.forEach(async type => {
+            types.forEach(async type => {
                 await this.initialize(type, data ? data[type] : null);
             });
+            return;
         }
 
         // String
         const type = types;
-        // Remove all existing rules of this type
-        this.list(type).forEach(instance => instance.remove());
+
+        // Remove existing rule instances of this type
+        this.getRules(type).forEach(instance => instance.remove());
+
         // Create new instances
-        data = data || await Storage.get(type);
+        data = data || await this.readData(type);
         Array.isArray(data) && data.forEach(details => {
             this.create(type, details);
         });
-    }
-
-    /**
-     * Create a rule instance.
-     * @private
-     * @param {string} type
-     * @param {Object} [details]
-     * @return {Object}
-     */
-    static create(type, details) {
-        const ruleConstructor = this.types.get(type);
-        return new ruleConstructor(details);
     }
 
     /**
@@ -41,27 +47,25 @@ class Factory {
      * @param {string} type
      */
     static add(type) {
-        const details = this.create(type);
+        const instance = this.create(type);
 
         // The rule data has been updated,
-        // hence updating storage.
+        // hence storage needs updating.
         this.saveData(type);
 
-        // As the outside of this factory should not care about rule instances,
-        // there's no need to return the created rule instance.
-        // Instead, this return the created rule's details.
-        return details.getDetails();
+        // Return the details of the newly created rule
+        return instance.getDetails();
     }
 
     /**
-     * Modify a property of a rule.
+     * Modify details of a rule.
      * @param {string} type
      * @param {string} id
-     * @param {Object} change
+     * @param {Object} changes
      * @return {void}
      */
-    static modify(type, id, change) {
-        this.types.get(type).instances.get(id).update(change);
+    static modify(type, id, changes) {
+        this.types.get(type).instances.get(id).update(changes);
 
         // Update storage
         this.saveData(type);
@@ -81,42 +85,24 @@ class Factory {
     }
 
     /**
-     * Get rule data (all rules' details) of a type.
+     * Get data of a type of rule.
      * @param {string} type
      * @return {Object[]}
      */
     static getData(type) {
-        return this.list(type).map(rule => rule.getDetails());
+        return this.getRules(type).map(rule => rule.getDetails());
     }
 
     /**
-     * Save rule data to storage.
-     * @param {string} type
-     */
-    static saveData(type) {
-        Storage.set({[type]: this.getData(type)});
-    }
-
-    /**
-     * List all instances of a type.
-     * @private
-     * @param type
-     * @return {Rule[]}
-     */
-    static list(type) {
-        return [...this.types.get(type).instances.values()];
-    }
-
-    /**
-     * List all rule types.
+     * Get all types of rule.
      * @return {string[]}
      */
-    static listTypes() {
+    static getTypes() {
         return [...this.types.keys()];
     }
 
     /**
-     * List all instances of a type.
+     * Check if a type of rule exists.
      * @param {string} type
      * @return {boolean}
      */
@@ -125,17 +111,49 @@ class Factory {
     }
 
     /**
-     * Rule constructors MUST register with this factory via this method.
-     * @param {string} name
-     * @param {Rule} rule
+     * Create a rule instance.
+     * @private
+     * @param {string} type
+     * @param {Object} [details]
+     * @return {Rule}
+     */
+    static create(type, details) {
+        const constructor = this.types.get(type);
+        return new constructor(details);
+    }
+
+    /**
+     * Get all rule instances of a type.
+     * @private
+     * @param type
+     * @return {Rule[]}
+     */
+    static getRules(type) {
+        return [...this.types.get(type).instances.values()];
+    }
+
+    /**
+     * Read rule data from storage.
+     * @param type
+     * @return {Promise}
+     */
+    static readData(type) {
+        return Storage.get(type);
+    }
+
+    /**
+     * Save rule data to storage.
+     * @private
+     * @param {string} type
      * @return {void}
      */
-    static register(name, rule) {
-        this.types.set(name, rule);
+    static saveData(type) {
+        Storage.set({[type]: this.getData(type)});
     }
 }
 
 /**
- * @type {Map<string, Rule>}
+ * A map of rule constructors.
+ * @type {Map<string, Object>}
  */
 Factory.types = new Map;

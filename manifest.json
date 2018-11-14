@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Man in the Middle",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "description": "Allow user to block or redirect requests, modify request headers and body, inject JavaScript and CSS into pages.",
   "developer": {
     "name": "Hoàng",
@@ -33,6 +33,7 @@
     "page": "src/page/background/background.html"
   },
   "options_ui": {
-    "page": "src/page/options/options.html"
+    "page": "src/page/options/options.html",
+    "open_in_tab": true
   }
 }

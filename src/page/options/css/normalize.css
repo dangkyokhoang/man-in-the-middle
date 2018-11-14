@@ -1,0 +1,68 @@
+:root {
+    --gray-0: #d8d8d8;
+    --gray-1: #f2f2f2;
+    --green-0: #7cff7c;
+    --green-1: #d7ffd7;
+    --yellow-0: #fff132;
+    --yellow-1: #fffac1;
+    --red-0: #ff9279;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    line-height: 1.5;
+    letter-spacing: 0.0125em;
+}
+
+html {
+    font-size: 13px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+h1, h2 {
+    padding: 0.25em 0;
+}
+
+h1 {
+    font-size: 2em;
+}
+
+h2 {
+    font-size: 1.5em;
+}
+
+section,
+article {
+    margin: 1em 0;
+}
+
+div {
+    margin: 0.5em 0;
+}
+
+span + span {
+    margin-left: 0.25em;
+}
+
+input,
+select,
+button {
+    font: inherit;
+    min-width: 0;
+}
+
+select {
+    -moz-appearance: button;
+}
+
+button {
+    cursor: pointer;
+}
+
+textarea {
+    font-size: inherit;
+    font-family: 'Courier New', Courier, monospace;
+}

@@ -1,10 +1,13 @@
+'use strict';
+
 /**
  * Request interception rule.
+ * @abstract
  */
 class RequestRule extends Rule {
     /**
      * @abstract
-     * @param {string} url
+     * @param {!string} url
      * @param {Object} [extraInfo]
      * @return {Object}
      */
@@ -35,37 +38,14 @@ class RequestRule extends Rule {
      * @param {RequestDetails}
      * @return {(Object|void)}
      */
-    filterRequest({method, originUrl, url, ...extraInfo}) {
+    filterRequest({url, originUrl, method, ...extraInfo}) {
         if (
-            method === this.method &&
-            Utils.filterUrl(url, this.urlFilter) &&
-            Utils.filterUrl(originUrl || url, this.originUrlFilter)
+            Utils.filterUrl(url, this.urlFilter, false)
+            && method === this.method
+            && Utils.filterUrl(originUrl || url, this.originUrlFilter)
         ) {
             return this.requestCallback(url, extraInfo);
         }
-    }
-
-    /**
-     * @param {string[]} urlFilters
-     * @return {void}
-     */
-    setUrlFilters(urlFilters) {
-        this.urlFilters = urlFilters;
-        this.urlFilter = Utils.createUrlFilters(this.urlFilters);
-
-        if (this.enabled) {
-            this.disable();
-            this.enable();
-        }
-    }
-
-    /**
-     * @param {string[]} originUrlFilters
-     * @return {void}
-     */
-    setOriginUrlFilters(originUrlFilters) {
-        this.originUrlFilters = originUrlFilters;
-        this.originUrlFilter = Utils.createUrlFilters(this.originUrlFilters);
     }
 
     /**
@@ -81,10 +61,8 @@ class RequestRule extends Rule {
  * @const
  * @type {RequestRuleDetails}
  */
-RequestRule.detailsDefault = {
-    ...RequestRule.detailsDefault,
-    urlFilters: [],
-    originUrlFilters: [],
+RequestRule.default = {
+    ...RequestRule.default,
     method: 'GET',
 };
 
@@ -93,28 +71,23 @@ RequestRule.detailsDefault = {
  */
 RequestRule.setters = {
     ...RequestRule.setters,
-    urlFilters: 'setUrlFilters',
-    originUrlFilters: 'setOriginUrlFilters',
     method: 'setMethod',
 };
 
 /**
- * Children MUST register their request event.
+ * Children MUST declare their request event.
  * @type {Object}
  */
 RequestRule.requestEvent = null;
 
 /**
- * Children MUST declare their required extra info.
+ * Children MAY add their required extra info.
  * @type {string[]}
  */
 RequestRule.extraInfoSpec = ['blocking'];
 
 /**
  * @typedef {RuleDetails} RequestRuleDetails
- * @property {string[]} [urlFilters]
- * @property {string[]} [matchPatterns] Deprecated since version 3.
- * @property {string[]} [originUrlFilters]
  * @property {RequestMethod} [method]
  */
 
@@ -134,9 +107,9 @@ RequestRule.extraInfoSpec = ['blocking'];
 
 /**
  * @typedef {object} RequestDetails
- * @property {string} method
- * @property {string} originUrl
  * @property {string} url
+ * @property {string} method
  * @property {Object[]} requestHeaders
  * @property {Object[]} responseHeaders
+ * @property {string} requestId
  */

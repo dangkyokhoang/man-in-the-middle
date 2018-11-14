@@ -1,3 +1,5 @@
+'use strict';
+
 class Storage {
     /**
      * @param {(string[]|string|void)} [keys]
@@ -16,34 +18,15 @@ class Storage {
      * @return {void}
      */
     static set(keys, silent = true) {
-        if (!Upgrader.databaseWritable) {
-            return;
-        }
-
         browser.storage.sync.set(keys).catch(console.warn);
 
         // If 'silent' is set to true,
-        // changes made won't trigger storage-changed events.
-        silent && this.changeHistory.push(Object.entries(keys));
+        // changes made won't trigger storage-changed event listeners.
+        silent && this.changes.push(Object.entries(keys));
     }
 
     /**
-     * Add a listener for storage-changed events.
-     * @param {Function} listener
-     * @return {void}
-     */
-    static addListener(listener) {
-        // If one listener is added,
-        // register storage-changed event callback.
-        if (this.listeners.size === 0) {
-            this.onChanged.addListener(this.changedCallback);
-        }
-
-        this.listeners.add(listener);
-    }
-
-    /**
-     * Storage change event listener, triggers user-registered listeners.
+     * Storage change event listener that triggers user-registered listeners.
      * @callback
      * @param {browser.storage.StorageChange} changes
      * @param {string} areaName
@@ -53,9 +36,9 @@ class Storage {
         if (areaName !== 'sync') {
             return;
         }
-        // Ignore changes made by Storage.set
-        if (this.isInHistory(changes)) {
-            this.changeHistory.shift();
+
+        if (this.isSilent(changes)) {
+            this.changes.shift();
             return;
         }
 
@@ -70,33 +53,40 @@ class Storage {
     }
 
     /**
-     * This checks if changes were made by Storage.set.
+     * Check if the change was made by Storage.set in silent mode.
      * @private
      * @param {Object} changes
      * @return {boolean}
      */
-    static isInHistory(changes) {
-        if (this.changeHistory.length) {
+    static isSilent(changes) {
+        if (this.changes.length) {
             return Utils.compare(
-                Object.entries(changes).map(([key, {newValue}]) => (
-                    [key, newValue]
-                )),
-                this.changeHistory[0]
+                Object.entries(changes)
+                    .map(([key, {newValue}]) => [key, newValue]),
+                this.changes[0]
             );
         }
-
         return false;
+    }
+
+    /**
+     * Add a listener for storage-changed events.
+     * @param {Function} listener
+     * @return {void}
+     */
+    static addListener(listener) {
+        this.listeners.add(listener);
     }
 }
 
 /**
- * This stores changes made by Storage.set so that
- *     storage-changed event listener can skip those changes.
+ * This stores changes made by Storage.set in silent mode.
+ * The storage-changed event listener must ignore those changes.
  * @private
  * @const
  * @type {Array}
  */
-Storage.changeHistory = [];
+Storage.changes = [];
 
 /**
  * @private
@@ -105,11 +95,6 @@ Storage.changeHistory = [];
  */
 Storage.listeners = new Set;
 
-/**
- * @private
- * @const
- * @type {WebExtEvent}
- */
-Storage.onChanged = browser.storage.onChanged;
-
 Binder.bindOwn(Storage);
+
+browser.storage.onChanged.addListener(Storage.changedCallback);

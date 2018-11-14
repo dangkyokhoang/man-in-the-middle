@@ -1,3 +1,5 @@
+'use strict';
+
 class Runtime {
     /**
      * Send message within the extension.

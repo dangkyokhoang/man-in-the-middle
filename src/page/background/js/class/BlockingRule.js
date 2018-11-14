@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * Request blocking rule.
  */
@@ -10,9 +12,10 @@ class BlockingRule extends RequestRule {
      * @see {@link https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/webRequest/onBeforeRequest}
      */
     async requestCallback(url, extraInfo) {
-        // If redirect URL is set, redirect the request to the URL.
+        // If redirect URL is set,
+        // redirect the request to the redirect URL.
         // Otherwise, cancel the request.
-        const redirectUrl = this.expressRedirectUrl(url);
+        const redirectUrl = this.getRedirectUrl(url);
         return redirectUrl ? {redirectUrl} : {cancel: true};
     }
 
@@ -25,23 +28,33 @@ class BlockingRule extends RequestRule {
     }
 
     /**
+     * @private
      * @param {string} url
      * @return {string}
      */
-    expressRedirectUrl(url) {
+    getRedirectUrl(url) {
         if (!this.redirectUrl) {
             return '';
         }
 
-        const matchedRegExpFilter = this.urlFilter.url.find(({urlMatches}) => (
-            RegExp(urlMatches).test(url)
+        let redirectUrl = this.redirectUrl;
+
+        // Find a RegExp filter that matches the URL
+        const filter = this.urlFilter.url.find(({urlMatches}) => (
+            urlMatches && RegExp(urlMatches).test(url)
         ));
-        return matchedRegExpFilter
-            ? url.replace(
-                RegExp(matchedRegExpFilter.urlMatches),
-                this.redirectUrl
-            )
-            : this.redirectUrl;
+        // If a filter found,
+        // replace '$i' in the redirect URL with capture groups.
+        if (filter) {
+            // Capture groups
+            const matches = url.match(RegExp(filter.urlMatches));
+            for (let i = matches.length - 1; i > 0; i--) {
+                const search = RegExp('\\$' + i.toString(), 'g');
+                redirectUrl = redirectUrl.replace(search, matches[i]);
+            }
+        }
+
+        return redirectUrl;
     }
 }
 
@@ -55,8 +68,8 @@ BlockingRule.instances = new Map;
 /**
  * @type {BlockingRuleDetails}
  */
-BlockingRule.detailsDefault = {
-    ...BlockingRule.detailsDefault,
+BlockingRule.default = {
+    ...BlockingRule.default,
     redirectUrl: '',
 };
 
@@ -73,12 +86,6 @@ BlockingRule.setters = {
  * @type {Object}
  */
 BlockingRule.requestEvent = browser.webRequest.onBeforeRequest;
-
-/**
- * @const
- * @type {string[]}
- */
-BlockingRule.extraInfoSpec = [...BlockingRule.extraInfoSpec];
 
 Factory.register('blockingRules', BlockingRule);
 

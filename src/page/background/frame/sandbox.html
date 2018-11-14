@@ -61,47 +61,44 @@
             'atob',
             'btoa',
             'fetch',
-            // APIs
+            // Other APIs
             'XMLHttpRequest',
         ]);
-
+        // 'window' inherits from 'EventTarget'
         Array.prototype.concat.call(
             Object.getOwnPropertyNames(window),
             Object.getOwnPropertyNames(EventTarget.prototype)
-        ).forEach(property => (
-            exceptions.has(property) || delete window[property]
-        ));
+        ).forEach(property => {
+            exceptions.has(property) || delete window[property];
+        });
     })();
 
     /**
-     * The <const> keyword is used here to declare function so that
-     *     the function won't become window objects.
+     * The <const> keyword is used here to declare the function
+     *     so that the function won't become a window's object.
      * @param {InterpreterFunctionDetails}
      * @return {Promise}
      * */
     const run = async function ({functionBody, args = {}}) {
         try {
-            // Arguments will be passed to the function via those parameters
+            // Arguments will be passed to the function via these parameters
             const params = Object.keys(args);
-            // Restricted global variables
+
+            // Restricted global objects
             const restrictions = [
                 'window',
                 'document',
                 'location',
                 'top',
                 'parent',
-            ].filter(variable => (
-                !params.includes(variable)
-            ));
+            ].filter(variable => !params.includes(variable));
 
             return await eval(
-                `async(${params.toString()})=>{` +
-                `let ${restrictions.toString()};` +
-                `${functionBody}}`
-            ).apply(
-                null,
-                params.map(param => args[param])
-            );
+                `async(${params.toString()})=>{`
+                + `let ${restrictions.toString()};`
+                + `${functionBody}`
+                + `}`
+            ).apply(null, params.map(param => args[param]));
         } catch ({message}) {
             return Promise.reject(message);
         }
@@ -109,7 +106,7 @@
 
     (() => {
         /**
-         * @param {string} id
+         * @param {!string} id
          * @param {boolean} success
          * @param {Object} response
          * @return {void}

@@ -1,3 +1,5 @@
+'use strict';
+
 class BrowserAction {
     /**
      * @param {Function} listener
@@ -7,3 +9,5 @@ class BrowserAction {
         browser.browserAction.onClicked.addListener(listener);
     }
 }
+
+Binder.bind(BrowserAction);

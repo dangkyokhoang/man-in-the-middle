@@ -1,4 +1,6 @@
-// Initialize all rules
+'use strict';
+
+// Initialize all rules on startup
 Factory.initialize();
 
 // If storage changes, re-initialize rules.
@@ -7,32 +9,41 @@ Storage.addListener(changes => changes.forEach(async ([type, {newValue}]) => {
         return;
     }
 
+    // Re-initialize rules
     await Factory.initialize(type, newValue);
 
+    // Notify the options page
     Runtime.sendMessage({
         sender: 'backgroundPage',
         command: 'update',
-        details: {type, data: Factory.getData(type)},
+        details: {
+            type,
+            data: Factory.getData(type),
+        },
     });
 }));
 
-// Handle requests from options page
+// Handle requests from the options page
 Runtime.addEventListener('message', async ({sender, request, details}) => {
     if (sender !== 'optionsPage') {
         return;
     }
 
-    const {type, id, change} = details;
     switch (request) {
+        case 'getInformation':
+            return {
+                version: Runtime.getManifest('version'),
+            };
         case 'add':
-            return Factory.add(type);
+            return Factory.add(details.type);
         case 'remove':
-            return Factory.remove(type, id);
+            return Factory.remove(details.type, details.id);
         case 'modify':
-            return Factory.modify(type, id, change);
-        case 'get':
-            return Factory.getData(type);
+            return Factory.modify(details.type, details.id, details.change);
+        case 'getData':
+            return Factory.getData(details.type);
     }
 });
 
+// Open the options page if user clicks the extension icon
 BrowserAction.addListener(Tabs.openOptionsPage);

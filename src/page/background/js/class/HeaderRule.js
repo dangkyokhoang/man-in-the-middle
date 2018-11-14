@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * Request header modification rule.
  */
@@ -6,13 +8,17 @@ class HeaderRule extends RequestRule {
      * Modify request or response headers.
      * @param {string} url
      * @param {Object} extraInfo
-     * @return {Promise<Object<Object[]>>}
+     * @return {(Promise<Object<Object[]>>|void)}
      * @see {@link https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/webRequest/onBeforeRequest}
      */
     requestCallback(url, extraInfo) {
-        return this.blockingResponse(
-            this.processHeaders(extraInfo[this.headerType])
-        );
+        if (!this.textHeaders) {
+            return;
+        }
+
+        return this.modifyHeaders(extraInfo[this.headerType]).then(headers => ({
+            [this.headerType]: headers,
+        }));
     }
 
     /**
@@ -20,27 +26,21 @@ class HeaderRule extends RequestRule {
      * @param {Object[]} headers
      * @return {Promise<Object[]>}
      */
-    async processHeaders(headers) {
+    async modifyHeaders(headers) {
         switch (this.textType) {
             case 'plaintext':
                 return this.constructor.replaceHeaders(
                     headers,
-                    this.textHeaders
+                    this.textHeaders,
                 );
             case 'JavaScript':
                 return Interpreter.run({
                     functionBody: this.textHeaders,
-                    args: {[this.headerType]: headers}
+                    args: {
+                        [this.headerType]: headers,
+                    },
                 });
         }
-    }
-
-    /**
-     * @private
-     * @param {Promise<Object<Object[]>>} promise
-     */
-    blockingResponse(promise) {
-        return promise.then(headers => ({[this.headerType]: headers}));
     }
 
     /**
@@ -50,16 +50,19 @@ class HeaderRule extends RequestRule {
      */
     static replaceHeaders(headers, textHeaders) {
         textHeaders.trim().split(/\s*[\r\n]\s*/).forEach(textHeader => {
-            let [name, value = ''] = textHeader.split(':', 2);
-            name = name.trim();
-            value = value.trim();
+            const matches = textHeader.match(/\s*(.*?)\s*:\s*(.*)\s*/);
+            if (!matches) {
+                return;
+            }
+            const [, name, value] = matches;
 
             // Find the current header in the existed header list
             const header = headers.find(header => (
                 header.name.toLowerCase() === name.toLowerCase()
             ));
-            // If a header with the name exists, replace the header's value.
-            // Otherwise, add the current header to header list.
+            // If a header with the name exists,
+            // replace the header's value.
+            // Otherwise, add the current header to the header list.
             if (header) {
                 header.value = value;
             } else if (value) {
@@ -110,8 +113,8 @@ HeaderRule.instances = new Map;
 /**
  * @type {HeaderRuleDetails}
  */
-HeaderRule.detailsDefault = {
-    ...HeaderRule.detailsDefault,
+HeaderRule.default = {
+    ...HeaderRule.default,
     textHeaders: '',
     textType: 'plaintext',
     headerType: 'requestHeaders',

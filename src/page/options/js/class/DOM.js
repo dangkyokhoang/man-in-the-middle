@@ -1,11 +1,13 @@
+'use strict';
+
 /**
- * APIs to work with DOM.
+ * Provide useful functions to work with DOM.
  */
 class DOM {
     /**
      * Create node(s).
      * @param {NodeDetails}
-     * @return {(HTMLElement|Node|void)} The topmost node created.
+     * @return {(HTMLElement|Node|void)}
      */
     static createNode({
                           tagName,
@@ -13,37 +15,82 @@ class DOM {
                           classList,
                           attributes,
                           parent,
-                          children
+                          children,
                       }) {
         let node;
-        // .tagName prevails against .text
+
+        // Property 'tagName' prevails over 'text'
         if (tagName) {
             node = document.createElement(tagName);
+
+            // Classes if exists,
+            // are added to the element.
             if (classList && classList.length) {
                 node.classList.add.apply(node.classList, classList);
             }
+
             if (attributes) {
                 Object.entries(attributes).forEach(([name, value]) => {
-                    // Set an attribute only if it's a string
+                    // An attribute is set only if it's a string
                     if (typeof value === 'string') {
                         node.setAttribute(name, value);
                     }
                 });
             }
+
+            // Recursively create children nodes
             if (children) {
                 children.forEach(child => {
                     if (child instanceof Node) {
                         node.appendChild(child);
                     } else {
-                        this.createNode({parent: node, ...child});
+                        this.createNode({...child, parent: node});
                     }
                 });
             }
-        } else {
+        } else if (text) {
             node = document.createTextNode(text);
+        } else {
+            return;
         }
 
-        return node && parent ? parent.appendChild(node) : node;
+        return parent ? parent.appendChild(node) : node;
+    }
+
+    /**
+     * Build an input based on the instructions.
+     * @param {Object}
+     * @return {Object<HTMLElement>}
+     */
+    static buildInput({parent, input, domValue}) {
+        // A function to create input
+        let builder;
+        // The key of the DOM value to pass to the builder
+        let key;
+
+        switch (input.tagName.toUpperCase()) {
+            case 'TEXTAREA':
+                builder = this.createTextareaGroup;
+                key = 'text';
+                break;
+            case 'INPUT':
+                builder = this.createInputGroup;
+                key = 'text';
+                break;
+            case 'SELECT':
+                builder = this.createSelectGroup;
+                key = 'selection';
+                break;
+            case 'SWITCH':
+                builder = this.createToggleSwitch;
+                key = 'checked';
+                break;
+            default:
+                builder = this.createNode;
+                key = 'text';
+        }
+
+        return builder({...input, parent, [key]: domValue});
     }
 
     /**
@@ -55,18 +102,22 @@ class DOM {
         const textarea = this.createNode({
             tagName: 'TEXTAREA',
             attributes: {placeholder},
-            children: text ? [{text}] : []
+            children: text ? [{text}] : [],
         });
+
         const container = this.createNode({
             tagName: 'DIV',
-            classList: ['multiline-input-group'],
+            classList: ['multiline-input'],
             parent,
             children: [
-                {tagName: 'LABEL', children: [{text: label}]},
+                {
+                    tagName: 'LABEL',
+                    children: [{text: label}],
+                },
                 {
                     tagName: 'DIV',
-                    classList: ['textarea-wrapper'],
-                    children: [textarea]
+                    classList: ['textarea'],
+                    children: [textarea],
                 }
             ]
         });
@@ -82,16 +133,23 @@ class DOM {
     static createInputGroup({label, parent, text, placeholder}) {
         const input = this.createNode({
             tagName: 'INPUT',
-            attributes: {value: text, placeholder}
+            attributes: {
+                value: text,
+                placeholder,
+            },
         });
+
         const container = this.createNode({
             tagName: 'DIV',
-            classList: ['input-group'],
+            classList: ['input'],
             parent,
             children: [
-                {tagName: 'LABEL', children: [{text: label}]},
-                input
-            ]
+                {
+                    tagName: 'LABEL',
+                    children: [{text: label}],
+                },
+                input,
+            ],
         });
 
         return {container, input};
@@ -105,48 +163,98 @@ class DOM {
     static createSelectGroup({label, parent, options, selection}) {
         const select = this.createNode({
             tagName: 'SELECT',
-            children: options
-                ? Object.entries(options).map(([value, text]) => {
-                    return {
-                        tagName: 'OPTION',
-                        attributes: {
-                            selected: value === selection ? '' : null,
-                            value
-                        },
-                        children: [{text}]
-                    };
-                })
-                : []
+            children: Object.entries(options).map(([value, text]) => ({
+                tagName: 'OPTION',
+                attributes: {
+                    value,
+                    selected: value === selection ? '' : null,
+                },
+                children: [{text}],
+            })),
         });
+
         const container = this.createNode({
             tagName: 'DIV',
-            classList: ['input-group'],
+            classList: ['input'],
             parent,
             children: [
-                {tagName: 'LABEL', children: [{text: label}]},
-                select
-            ]
+                {
+                    tagName: 'LABEL',
+                    children: [{text: label}],
+                },
+                select,
+            ],
         });
 
         return {container, input: select};
     }
 
     /**
-     * Get element builder by tag name.
-     * @param {string} tagName
-     * @return {Function}
+     * Create a toggle switch element.
+     * @param {ToggleSwitchDetails}
+     * @return {Object<HTMLElement>}
      */
-    static getInputBuilder(tagName) {
-        switch (tagName.toUpperCase()) {
-            case 'TEXTAREA':
-                return this.createTextareaGroup;
-            case 'INPUT':
-                return this.createInputGroup;
-            case 'SELECT':
-                return this.createSelectGroup;
-            default:
-                return this.createNode;
+    static createToggleSwitch({parent, checked}) {
+        const checkbox = this.createNode({
+            tagName: 'INPUT',
+            attributes: {
+                type: 'checkbox',
+                checked,
+            },
+        });
+
+        const container = this.createNode({
+            tagName: 'SPAN',
+            parent,
+            children: [{
+                tagName: 'LABEL',
+                classList: ['switch'],
+                children: [
+                    checkbox,
+                    {
+                        tagName: 'SPAN',
+                        classList: ['slider'],
+                    },
+                ],
+            }],
+        });
+
+        return {container, input: checkbox};
+    }
+
+    /**
+     * Create a button element.
+     * @param {ButtonDetails}
+     * @return {Object<HTMLElement>}
+     */
+    static createButton({parent, text, highlight = []}) {
+        const classList = highlight.length ? highlight : ['highlight-ok'];
+
+        const button = this.createNode({
+            tagName: 'BUTTON',
+            classList,
+            children: [{text}],
+        });
+
+        const container = this.createNode({
+            tagName: 'SPAN',
+            parent,
+            children: [button],
+        });
+
+        return {container, button};
+    }
+
+    /**
+     * Get element value.
+     * @param {DOMInput} element
+     * @return {string}
+     */
+    static value(element) {
+        if (element.getAttribute('type') === 'checkbox') {
+            return element.checked ? 'enabled' : 'disabled';
         }
+        return element.value;
     }
 
     /**
@@ -181,6 +289,22 @@ class DOM {
      */
     static isActive(element) {
         return element.classList.contains('active');
+    }
+
+    /**
+     * Enable an element.
+     * @param {Element} element
+     */
+    static enable(element) {
+        element.classList.add('enabled');
+    }
+
+    /**
+     * Disable an element.
+     * @param {Element} element
+     */
+    static disable(element) {
+        element.classList.remove('enabled');
     }
 
     /**
@@ -227,4 +351,23 @@ Binder.bind(DOM);
  * @property {HTMLElement} [parent]
  * @property {Object} [options]
  * @property {string} [selection]
+ */
+
+/**
+ * @typedef {Object} ToggleSwitchDetails
+ * @property {HTMLElement} [parent]
+ * @property {Object} [checked]
+ */
+
+/**
+ * @typedef {HTMLElement} DOMInput
+ * @property {boolean} [checked]
+ * @property {string} [value]
+ */
+
+/**
+ * @typedef {Object} ButtonDetails
+ * @property {HTMLElement} [parent]
+ * @property {Object} [text]
+ * @property {string[]} [highlight]
  */

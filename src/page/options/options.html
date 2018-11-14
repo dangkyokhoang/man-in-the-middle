@@ -3,32 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Options—Man in the Middle</title>
+    <title>Man in the Middle — Options</title>
     <link rel="icon" href="../../img/icon/mitm_on_32.png">
-    <link rel="stylesheet" type="text/css" href="css/options.css">
+    <link rel="stylesheet" type="text/css" href="css/normalize.css">
+    <link rel="stylesheet" type="text/css" href="css/grid.css">
+    <link rel="stylesheet" type="text/css" href="css/input.css">
+    <link rel="stylesheet" type="text/css" href="css/highlight.css">
 </head>
 <body>
-<section>
-    <h2>Intercepting Requests</h2>
+<section class="information" id="information">
+    <h1>Man in the Middle</h1>
+</section>
+<section class="main">
     <section id="blockingRules">
-        <h3>Blocking Rules</h3>
+        <h2>Blocking Rules</h2>
     </section>
     <section id="headerRules">
-        <h3>Header Rules</h3>
+        <h2>Header Rules</h2>
+    </section>
+    <section id="responseRules">
+        <h2>Response Rules</h2>
+    </section>
+    <section id="contentScripts">
+        <h2>Content Scripts</h2>
     </section>
 </section>
-<section id="contentScripts">
-    <h2>Content Scripts</h2>
-</section>
-<section>
+<section class="help">
     <h2>Help</h2>
-    <a href="https://github.com/dangkyokhoang/Man-in-the-Middle" target="_blank">
-        <button>https://github.com/dangkyokhoang/Man-in-the-Middle</button>
+    <a href="https://github.com/dangkyokhoang/Man-in-the-Middle"
+       target="_blank">
+        <button class="highlight-ok">Visit GitHub for Help</button>
     </a>
 </section>
 <script src="../shared/js/class/Binder.js"></script>
 <script src="../shared/js/class/Runtime.js"></script>
 <script src="js/class/DOM.js"></script>
+<script src="js/class/Information.js"></script>
 <script src="js/class/Collection.js"></script>
 <script src="js/options.js"></script>
 </body>

@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * Content script rule.
  */
@@ -6,7 +8,7 @@ class ContentScript extends Rule {
      * @inheritDoc
      */
     register() {
-        if (this.code) {
+        if (this.code && this.urlFilters.length) {
             this.navigationEvent.addListener(
                 this.navigateCallback,
                 this.urlFilter
@@ -22,13 +24,37 @@ class ContentScript extends Rule {
     }
 
     /**
-     * Inject content scripts to the tab matched the filters.
+     * Inject content scripts to tabs matching the filters.
      * @private
      * @param {NavigationDetails}
      * @return {void}
      */
-    navigateCallback({tabId, frameId}) {
-        this.injector(tabId, {frameId, code: this.code}).catch(console.warn);
+    async navigateCallback({tabId, frameId, url}) {
+        if (this.originUrlFilters.length) {
+            // Origin URL is the top window's URL
+            let originUrl;
+            // If the current frame is the top window,
+            // the origin URL is the navigation URL.
+            if (frameId === 0) {
+                originUrl = url;
+            } else {
+                const originFrame = await browser.webNavigation.getFrame({
+                    tabId,
+                    frameId: 0,
+                });
+                originUrl = originFrame.url;
+            }
+
+            if (!Utils.filterUrl(originUrl, this.originUrlFilter)) {
+                return;
+            }
+        }
+
+        this.injector(tabId, {
+            frameId,
+            code: this.code,
+            runAt: this.runAt,
+        }).catch(console.warn);
     }
 
     /**
@@ -43,9 +69,9 @@ class ContentScript extends Rule {
          */
         this.code = code;
 
-        if (this.enabled) {
-            this.disable();
-            this.enable();
+        if (this.active) {
+            this.deactivate();
+            this.activate();
         }
     }
 
@@ -73,8 +99,8 @@ class ContentScript extends Rule {
      * @return {void}
      */
     setDOMEvent(domEvent) {
-        const enabled = this.enabled;
-        this.disable();
+        const active = this.active;
+        this.deactivate();
 
         /**
          * @private
@@ -86,31 +112,13 @@ class ContentScript extends Rule {
          * @type {WebExtEvent}
          */
         this.navigationEvent = this.constructor.navigationEvents[this.domEvent];
-
-        enabled && this.enable();
-    }
-
-    /**
-     * @param {string[]} urlFilters
-     * @return {void}
-     */
-    setUrlFilters(urlFilters) {
         /**
          * @private
-         * @type {string[]}
+         * @type {string}
          */
-        this.urlFilters = urlFilters;
-        /**
-         * Web navigation event URL filter object.
-         * @private
-         * @type {Object}
-         */
-        this.urlFilter = Utils.createUrlFilters(this.urlFilters);
+        this.runAt = this.constructor.runAts[this.domEvent];
 
-        if (this.enabled) {
-            this.disable();
-            this.enable();
-        }
+        active && this.activate();
     }
 }
 
@@ -123,12 +131,11 @@ ContentScript.instances = new Map;
  * @override
  * @type {ContentScriptDetails}
  */
-ContentScript.detailsDefault = {
-    ...ContentScript.detailsDefault,
+ContentScript.default = {
+    ...ContentScript.default,
     code: '',
     scriptType: 'JavaScript',
     domEvent: 'completed',
-    urlFilters: [],
 };
 
 /**
@@ -139,7 +146,6 @@ ContentScript.setters = {
     code: 'setCode',
     scriptType: 'setScriptType',
     domEvent: 'setDOMEvent',
-    urlFilters: 'setUrlFilters',
 };
 
 /**
@@ -154,6 +160,16 @@ ContentScript.navigationEvents = {
 
 /**
  * @private
+ * @type {Object<string>}
+ */
+ContentScript.runAts = {
+    loading: 'document_start',
+    loaded: 'document_end',
+    completed: 'document_idle',
+};
+
+/**
+ * @private
  * @type {Object<Function>}
  */
 ContentScript.injectors = {
@@ -164,11 +180,10 @@ ContentScript.injectors = {
 Factory.register('contentScripts', ContentScript);
 
 /**
- * @typedef {Object} ContentScriptDetails
+ * @typedef {RuleDetails} ContentScriptDetails
  * @property {string} [code]
  * @property {ScriptType} [scriptType]
  * @property {DOMEvent} [domEvent]
- * @property {string[]} [urlFilters]
  */
 
 /**
