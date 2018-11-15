@@ -33,14 +33,14 @@ class ResponseRule extends RequestRule {
         const decoder = new TextDecoder(charset);
         const encoder = new TextEncoder();
 
-        let response = '';
+        let responseBody = '';
         filter.ondata = (event) => {
-            response += decoder.decode(event.data, {stream: true});
+            responseBody += decoder.decode(event.data, {stream: true});
         };
 
         filter.onstop = async () => {
             filter.write(encoder.encode(await this.modifyResponse(
-                response
+                responseBody
             )));
             filter.close();
         };
@@ -48,17 +48,17 @@ class ResponseRule extends RequestRule {
 
     /**
      * @private
-     * @param {string} response
+     * @param {string} responseBody
      * @return {Promise<string>}
      */
-    async modifyResponse(response) {
+    async modifyResponse(responseBody) {
         switch (this.textType) {
             case 'plaintext':
                 return this.textResponse;
             case 'JavaScript':
                 return Interpreter.run({
                     functionBody: this.textResponse,
-                    args: {response},
+                    args: {responseBody},
                 });
         }
     }
