@@ -14,7 +14,7 @@ Allow user to block or redirect requests, modify headers and response body, inje
 
 ## Screenshots
 
-![Block or redirect requests](https://addons.cdn.mozilla.net/user-media/previews/full/211/211150.png?modified=1542280030)
+![Block or redirect requests](https://addons.cdn.mozilla.net/user-media/previews/full/211/211170.png?modified=1542319742)
 _Use Blocking Rules to block or redirect requests._
 
 ![Modify request and response headers](https://addons.cdn.mozilla.net/user-media/previews/full/211/211152.png?modified=1542280030)
