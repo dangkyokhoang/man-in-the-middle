@@ -11,6 +11,13 @@ Allow user to block or redirect requests, modify headers and response body, inje
 **[Get Man in the Middle](https://addons.mozilla.org/en-US/firefox/addon/man-in-the-middle/)** on Firefox Add-ons.  
 **[Get help](#rules)** writing rules.
 
+Use cases:
+- Block or redirect websites and requests;
+- Add, modify or remove request headers;
+- Modify request responses;
+- Inject JavaScript into pages to make pages function as desired.
+- Inject CSS into pages to style pages as desired.
+
 
 ## Screenshots
 
@@ -34,6 +41,7 @@ _Content Scripts can even be injected to the extension's pages._
 
 
 ## Rules
+Select rule properties for more details.
 
 ### Blocking Rules
 Rules to block or redirect requests.  
@@ -63,7 +71,7 @@ Rules to modify network responses.
 Rules to inject JavaScript and CSS into pages.
 - [Code (Required)](#code);
 - [Script type](#script-type);
-- [URL filters](#url-filters);
+- [URL filters (Required)](#url-filters);
 - [DOM event](#dom-event);
 - [Origin URL filters](#origin-url-filters).
 
