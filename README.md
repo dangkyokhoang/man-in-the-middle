@@ -15,7 +15,7 @@ Use cases:
 - Block or redirect websites and requests;
 - Add, modify or remove request headers;
 - Modify request responses;
-- Inject JavaScript into pages to make pages function as desired.
+- Inject JavaScript into pages to make pages function as desired;
 - Inject CSS into pages to style pages as desired.
 
 
