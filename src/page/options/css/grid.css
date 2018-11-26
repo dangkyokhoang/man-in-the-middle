@@ -1,22 +1,22 @@
 body {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: 7.0em 1fr;
+    grid-template-rows: 7em 1fr;
     height: 100vh;
+}
+
+.information {
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
+    padding: 0 2em;
 }
 
 .main {
     grid-column: 1 / 3;
     grid-row: 2 / 3;
     overflow: auto;
-    border-top: 1px solid var(--gray-1);
-    border-bottom: 1px solid var(--gray-1);
-    padding: 0 2em;
-}
-
-.information {
-    grid-column: 1 / 2;
-    grid-row: 1 / 2;
+    border-top: 1px solid var(--gray-0);
+    border-bottom: 1px solid var(--gray-0);
     padding: 0 2em;
 }
 

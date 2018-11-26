@@ -29,13 +29,10 @@ class HeaderRule extends RequestRule {
     async modifyHeaders(headers) {
         switch (this.textType) {
             case 'plaintext':
-                return this.constructor.replaceHeaders(
-                    headers,
-                    this.textHeaders,
-                );
+                return this.constructor.modify(headers, this.headers);
             case 'JavaScript':
                 return Interpreter.run({
-                    functionBody: this.textHeaders,
+                    functionBody: this.methodModify() + this.textHeaders,
                     args: {
                         [this.headerType]: headers,
                     },
@@ -46,20 +43,15 @@ class HeaderRule extends RequestRule {
     /**
      * @private
      * @param {Object[]} headers
-     * @param {string} textHeaders
+     * @param {Array[]} newHeaders
      */
-    static replaceHeaders(headers, textHeaders) {
-        textHeaders.trim().split(/\s*[\r\n]\s*/).forEach(textHeader => {
-            const matches = textHeader.match(/\s*(.*?)\s*:\s*(.*)\s*/);
-            if (!matches) {
-                return;
-            }
-            const [, name, value] = matches;
-
-            // Find the current header in the existed header list
+    static modify(headers, newHeaders) {
+        newHeaders.forEach(([name, value]) => {
+            // Find the current header in the list of existing headers
             const header = headers.find(header => (
                 header.name.toLowerCase() === name.toLowerCase()
             ));
+
             // If a header with the name exists,
             // replace the header's value.
             // Otherwise, add the current header to the header list.
@@ -74,10 +66,33 @@ class HeaderRule extends RequestRule {
     }
 
     /**
+     * Generate a string to add the method 'modify' to the array of headers.
+     * @return {string}
+     * @see {HeaderRule.modifyHeaders}
+     * @see {HeaderRule.modify}
+     */
+    methodModify() {
+        return `${this.headerType}.modify=(function(newHeaders){`
+            + `newHeaders.forEach(([name,value])=>{`
+            + `const header=this.find(header=>`
+            + `header.name.toLowerCase()===name.toLowerCase());`
+            + `if(header){header.value=value;}`
+            + `else if(value){this.push({name,value});}`
+            + `});`
+            + `return this;`
+            + `}).bind(${this.headerType});`;
+    }
+
+    /**
      * @param {string} textHeaders
      */
     setTextHeaders(textHeaders) {
         this.textHeaders = textHeaders;
+
+        // This updates the key 'headers'
+        if (this.hasOwnProperty('textType')) {
+            this.setTextType(this.textType);
+        }
     }
 
     /**
@@ -85,6 +100,23 @@ class HeaderRule extends RequestRule {
      */
     setTextType(textType) {
         this.textType = textType;
+
+        if (this.textType === 'plaintext') {
+            // Convert text headers to array of new headers for later use
+            const lines = this.textHeaders.trim().split(/\s*[\r\n]\s*/);
+            // Convert strings to arrays, remove invalid headers
+            this.headers = lines.reduce((headers, textHeader) => {
+                const matches = textHeader.match(/(.+?)\s*:\s*(.*)/);
+                if (matches) {
+                    // [, name, value]
+                    matches.shift();
+                    headers.push(matches);
+                }
+                return headers;
+            }, []);
+        } else {
+            this.headers = null;
+        }
     }
 
     /**

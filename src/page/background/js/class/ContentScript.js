@@ -30,6 +30,10 @@ class ContentScript extends Rule {
      * @return {void}
      */
     async navigateCallback({tabId, frameId, url}) {
+        if (Utils.testUrl(url, this.urlExceptions, false)) {
+            return;
+        }
+
         if (this.originUrlFilters.length) {
             // Origin URL is the top window's URL
             let originUrl;
@@ -45,7 +49,10 @@ class ContentScript extends Rule {
                 originUrl = originFrame.url;
             }
 
-            if (!Utils.filterUrl(originUrl, this.originUrlFilter)) {
+            if (
+                !Utils.testUrl(originUrl, this.originUrlFilter)
+                || Utils.testUrl(originUrl, this.originUrlExceptions, false)
+            ) {
                 return;
             }
         }
@@ -54,7 +61,7 @@ class ContentScript extends Rule {
             frameId,
             code: this.code,
             runAt: this.runAt,
-        }).catch(console.warn);
+        }).catch(Logger.log);
     }
 
     /**

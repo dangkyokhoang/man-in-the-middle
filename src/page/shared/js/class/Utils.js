@@ -77,13 +77,31 @@ class Utils {
     }
 
     /**
+     * Convert URL filter strings to UrlFilter and UrlExceptions objects.
      * @param {string[]} urlFilters
-     * @return {Object}
+     * @return {Object[]}
      * @see {@link https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/events/UrlFilter}
      * @see {@link https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webNavigation/onCompleted}
      */
     static createUrlFilter(urlFilters) {
-        const url = urlFilters.map(urlFilter => {
+        // [UrlFilter, UrlExceptions]
+        const filter = [
+            {url: []},
+            {url: []},
+        ];
+
+        urlFilters.forEach(urlFilter => {
+            // Type === 0 ? UrlFilter : UrlExceptions
+            let type = 0;
+
+            // Filters beginning with `!` are URL exceptions
+            const exceptionMark = urlFilter.match(/^\s*!\s*/);
+            if (exceptionMark) {
+                // Remove the exception mark from the string
+                urlFilter = urlFilter.substr(exceptionMark[0].length);
+                type = 1;
+            }
+
             // This tests if the URL filter string looks like a RegExp
             if (
                 urlFilter.substr(0, 1) === '/'
@@ -93,17 +111,19 @@ class Utils {
                 // let the filter be a RegExp matching filter.
                 try {
                     const urlMatches = urlFilter.slice(1, -1);
+                    // Verify that the string is a valid RegExp
                     RegExp(urlMatches);
-
-                    return {urlMatches};
-                } catch ({message}) {
-                    console.warn(message);
+                    filter[type].url.push({urlMatches});
+                    return;
+                } catch (error) {
+                    Logger.log(error);
                 }
             }
-            // Or return string filter by default
-            return {urlContains: urlFilter};
+            // Or let the filter be a string filter by default
+            filter[type].url.push({urlContains: urlFilter});
         });
-        return {url};
+
+        return filter;
     }
 
     /**
@@ -115,7 +135,7 @@ class Utils {
      * @return {boolean}
      * @see {Utils.createUrlFilter}
      */
-    static filterUrl(url, filter, optional = true) {
+    static testUrl(url, filter, optional = true) {
         if (optional && filter.url.length === 0) {
             return true;
         }

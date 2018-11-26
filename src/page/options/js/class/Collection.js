@@ -72,6 +72,10 @@ class Collection {
                         element.input.focus();
                     }
                 });
+
+                element.input.addEventListener('focus', () => {
+                    DOM.activate(parent);
+                });
             }
 
             if (property === 'enabled') {
@@ -366,6 +370,7 @@ Collection.instructions = {
             tagName: 'SELECT',
             label: 'Method',
             options: {
+                '': '*',
                 GET: 'GET',
                 POST: 'POST',
                 HEAD: 'HEAD',

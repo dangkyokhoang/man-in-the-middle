@@ -8,7 +8,8 @@ class Runtime {
      * @see {@link https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/runtime/sendMessage}
      */
     static sendMessage(message) {
-        return browser.runtime.sendMessage(message).catch(console.warn);
+        // Ignore the error: Receiving end doesn't exist
+        return browser.runtime.sendMessage(message).catch(() => {});
     }
 
     /**

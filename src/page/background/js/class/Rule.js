@@ -118,7 +118,11 @@ class Rule {
      */
     setUrlFilters(urlFilters) {
         this.urlFilters = urlFilters;
-        this.urlFilter = Utils.createUrlFilter(this.urlFilters);
+
+        // ES6 destructuring causes IDE errors
+        const filter = Utils.createUrlFilter(this.urlFilters);
+        this.urlFilter = filter[0];
+        this.urlExceptions = filter[1];
 
         if (this.active) {
             this.deactivate();
@@ -132,7 +136,10 @@ class Rule {
      */
     setOriginUrlFilters(originUrlFilters) {
         this.originUrlFilters = originUrlFilters;
-        this.originUrlFilter = Utils.createUrlFilter(this.originUrlFilters);
+
+        const filter = Utils.createUrlFilter(this.originUrlFilters);
+        this.originUrlFilter = filter[0];
+        this.originUrlExceptions = filter[1];
     }
 
     /**
@@ -182,7 +189,7 @@ Rule.setters = {
  * @typedef {Object} RuleDetails
  * @property {string} [id]
  * @property {string} [name]
- * @propẻty {boolean} [enabled]
+ * @property {boolean} [enabled]
  * @property {string[]} [urlFilters]
  * @property {string[]} [originUrlFilters]
  */

@@ -9,7 +9,7 @@ class Interpreter {
      * @return {Promise}
      */
     static run(details) {
-        return this.sendMessage(details).catch(console.warn);
+        return this.sendMessage(details).catch(Logger.log);
     }
 
     /**

@@ -11,12 +11,16 @@ article.enabled > :first-child > input {
 }
 
 article:not(.active) {
+    display: flex;
     cursor: pointer;
 }
 
-article:not(.active) > :not(:first-child),
-article:not(.active) > :first-child > label {
-    opacity: 0;
+article:not(.active) > :first-child {
+    margin: 0 0.25em 0 0;
+}
+
+article:not(.active) > :first-child > label,
+article:not(.active) > :not(:first-of-type) {
     display: none;
 }
 

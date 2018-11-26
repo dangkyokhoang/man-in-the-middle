@@ -5,7 +5,7 @@ class Tabs {
      * @return {void}
      */
     static openOptionsPage() {
-        browser.runtime.openOptionsPage().catch(console.warn);
+        browser.runtime.openOptionsPage().catch(Logger.log);
     }
 }
 

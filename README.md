@@ -1,10 +1,10 @@
 # Man in the Middle
 
-_Firefox Extension._  
+_Firefox Extension._
 
 ---
 
-Allow user to block or redirect requests, modify headers and response body, inject JavaScript and CSS into pages.
+Allow user to block or redirect requests, modify request headers and responses, inject JavaScript and CSS into pages.
 
 ---
 
@@ -13,10 +13,10 @@ Allow user to block or redirect requests, modify headers and response body, inje
 
 Use cases:
 - Block or redirect websites and requests;
-- Add, modify or remove request headers;
-- Modify request responses;
-- Inject JavaScript into pages to make pages function as desired;
-- Inject CSS into pages to style pages as desired.
+- Add, modify or remove request and response headers;
+- Modify response data;
+- Inject JavaScript into pages to make them function as desired;
+- Inject CSS into pages to style them as desired.
 
 
 ## Screenshots
@@ -82,13 +82,24 @@ Rules to inject JavaScript and CSS into pages.
 Filter `request URL`s or `document URL`s.
 - Format: [RegExp pattern](#regexp-pattern) or [String filter](#string-filter).
 - Separator: `line break`, i.e, `'\n'`, `'\r'` or `'\r\n'`.
-- A `URL` is satisfied if it matches at least one of the filters.
+- A filter that begins with an exclamation mark `'!'` is a `URL exception`.
+- A `URL` is satisfied if it matches at least one of the filters and DOES NOT match any `URL exception`.
   - A `URL` matches a filter if it matches the `RegExp pattern` or includes the `String filter`.
+- Examples:
+  ````
+  Any site is matched
+  http
+  ````
+  ````
+  Any site is matched, but not www.google.com
+  http
+  !www.google.com
+  ````
 - Rules: [Blocking Rules](#blocking-rules), [Header Rules](#header-rules), [Response Rules](#response-rules) and [Content Scripts](#content-scripts).
 
 ### Method
 Filters `request method`s.
-- Value can be one of the HTTP request methods, i.e, `'GET'`, `'POST'`, `'HEAD'`, etc.
+- Value can be `'*'` or one of the HTTP request methods, i.e, `'GET'`, `'POST'`, `'HEAD'`, etc.
 - A `request method` is satisfied if it equals to the `method`.
 - Rules: [Blocking Rules](#blocking-rules), [Header Rules](#header-rules) and [Response Rules](#response-rules).
 
@@ -145,6 +156,11 @@ To modify request or response headers.
   - Depending on [Header type](#header-type),
     the code will be passed an argument `requestHeaders` or `responseHeaders`, which is the list of the existing headers.
   - Examples:
+    ````
+    // Header type: Request headers
+    // This do nothing but log the request headers to the console.
+    throw requestHeaders;
+    ````
     ```` JavaScript
     // Header type: Request headers
     const acceptHeader = requestHeaders.find(({name}) => (
@@ -215,6 +231,7 @@ To modify network responses.
 
 ### Script type
 `'JavaScript'` or `'CSS'`.
+- To see error logs, open the `devtools > Console`.
 - Rule: [Content Scripts](#content-scripts).
 
 ### DOM event
@@ -258,6 +275,7 @@ A JavaScript function body that will be executed inside a sandbox.
   - `crypto`, `performance`, `atob`, `btoa`, `fetch` and `XMLHttpRequest`.
 - The function is `async`, hence, `await` can be used to perform asynchronous tasks.
 - The code should always `return` a value.
+- The code may `throw` a cloneable value. To see error logs, open the `devtools > Console`.
 - Properties: [Text headers](#text-headers) and [Text response](#text-response).
 
 

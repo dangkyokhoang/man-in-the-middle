@@ -12,5 +12,7 @@ Runtime.addEventListener('message', async ({sender, command, details}) => {
     switch (command) {
         case 'update':
             return Collection.initialize(details.type, details.data);
+        case 'log':
+            return console.log(details.message);
     }
 });

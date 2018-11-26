@@ -39,10 +39,19 @@ class RequestRule extends Rule {
      * @return {(Object|void)}
      */
     filterRequest({url, originUrl, method, ...extraInfo}) {
+        originUrl = originUrl || url;
+
         if (
-            Utils.filterUrl(url, this.urlFilter, false)
-            && method === this.method
-            && Utils.filterUrl(originUrl || url, this.originUrlFilter)
+            Utils.testUrl(url, this.urlFilter, false)
+            && !Utils.testUrl(url, this.urlExceptions, false)
+            && (
+                !this.method
+                || method === this.method
+            )
+            && (
+                Utils.testUrl(originUrl, this.originUrlFilter)
+                && !Utils.testUrl(originUrl, this.originUrlExceptions, false)
+            )
         ) {
             return this.requestCallback(url, extraInfo);
         }
@@ -63,7 +72,7 @@ class RequestRule extends Rule {
  */
 RequestRule.default = {
     ...RequestRule.default,
-    method: 'GET',
+    method: '',
 };
 
 /**
@@ -94,6 +103,7 @@ RequestRule.extraInfoSpec = ['blocking'];
 /**
  * @typedef {string} RequestMethod
  * @enum {
+ *     '',
  *     'GET',
  *     'POST',
  *     'HEAD',

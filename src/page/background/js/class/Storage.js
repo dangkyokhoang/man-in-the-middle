@@ -8,7 +8,7 @@ class Storage {
     static get(keys) {
         return browser.storage.sync.get(keys).then(
             data => Array.isArray(keys) || !keys ? data : data[keys],
-            console.warn
+            Logger.log
         );
     }
 
@@ -18,7 +18,7 @@ class Storage {
      * @return {void}
      */
     static set(keys, silent = true) {
-        browser.storage.sync.set(keys).catch(console.warn);
+        browser.storage.sync.set(keys).catch(Logger.log);
 
         // If 'silent' is set to true,
         // changes made won't trigger storage-changed event listeners.

@@ -31,7 +31,14 @@
             'encodeURIComponent',
             'Object',
             'Boolean',
-            'Symbol',
+            'Error',
+            'EvalError',
+            'InternalError',
+            'RangeError',
+            'ReferenceError',
+            'SyntaxError',
+            'TypeError',
+            'URIError',
             'Number',
             'Math',
             'Date',
@@ -54,7 +61,6 @@
             'JSON',
             'Promise',
             // Window interface's objects
-            'console',
             'crypto',
             'parent',
             'performance',
@@ -93,14 +99,20 @@
                 'parent',
             ].filter(variable => !params.includes(variable));
 
+            // This makes sure the return value is cloneable
             return await eval(
                 `async(${params.toString()})=>{`
                 + `let ${restrictions.toString()};`
                 + `${functionBody}`
                 + `}`
             ).apply(null, params.map(param => args[param]));
-        } catch ({message}) {
-            return Promise.reject(message);
+        } catch (value) {
+            return Promise.reject(
+                // Some types may need converting to string
+                [Error, Date, RegExp].some(type => value instanceof type)
+                    ? String(value)
+                    : value
+            );
         }
     };
 
@@ -112,7 +124,12 @@
          * @return {void}
          */
         const sendResponse = (id, success, response) => {
-            parent.postMessage({id, success, response}, '*');
+            parent.postMessage({
+                id,
+                success,
+                // This makes sure the response value is cloneable
+                response: JSON.parse(JSON.stringify(response)),
+            }, '*');
         };
 
         addEventListener('message', ({data}) => {

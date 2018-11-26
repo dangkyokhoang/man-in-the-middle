@@ -21,6 +21,7 @@ textarea {
 .input,
 .multiline-input {
     display: flex;
+    min-width: 0;
 }
 
 .input > label,
