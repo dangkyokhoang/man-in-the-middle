@@ -155,23 +155,32 @@ To modify request or response headers.
   - The code must `return` an array of objects, each objects has two properties: `'name'` and `'value'`.
   - Depending on [Header type](#header-type),
     the code will be passed an argument `requestHeaders` or `responseHeaders`, which is the list of the existing headers.
+  - The argument `requestHeaders` or `responseHeaders` has method `modify` which makes it easy to modify headers (See the below examples).
   - Examples:
-    ````
+    ```` JavaScript
     // Header type: Request headers
     // This do nothing but log the request headers to the console.
     throw requestHeaders;
     ````
     ```` JavaScript
     // Header type: Request headers
+    
+    // This line
+    requestHeaders.modify([ ['Accept', '*'] ]);
+    //   equals to the below
     const acceptHeader = requestHeaders.find(({name}) => (
         name.toLowerCase() === 'accept'
     ));
     // Accept: *
     acceptHeader && acceptHeader.value = '*';
-    return requestHeaders; 
+    
+    return requestHeaders;
     ````
     ```` JavaScript
     // Header type: Request headers
+    // This line
+    requestHeaders.modify([ ['Referer', ''] ]);
+    //   equals to the below
     const refererHeaderIndex = requestHeaders.findIndex(({name}) => (
         name.toLowerCase() === 'referer'
     ));
@@ -179,6 +188,7 @@ To modify request or response headers.
     if (refererHeaderIndex !== -1) {
         requestHeaders.splice(refererHeaderIndex, 1);
     }
+    
     return requestHeaders;
     ````
     ```` JavaScript
