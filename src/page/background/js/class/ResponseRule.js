@@ -3,44 +3,47 @@
 /**
  * Request response body modification rule.
  */
-class ResponseRule extends RequestRule {
+class ResponseRule extends RequestModificationRule {
     /**
      * Modify the response body of the request.
-     * @param {string} url
-     * @param {Object} extraInfo
+     * @param {RequestDetails} details
      * @return {void}
      * @see {@link https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/filterResponseData}
      */
-    async requestCallback(url, extraInfo) {
-        const {requestId, responseHeaders, documentUrl} = extraInfo;
-        let charset = this.constructor.getCharset(responseHeaders);
-        if (!charset) {
-            if (documentUrl === undefined) {
-                // No charset was detected,
-                // but this request is a document (assumed html),
-                // the response's supposed to be text,
-                // so default encoding is used.
-                charset = this.constructor.defaultEncoding;
-            } else {
-                return;
-            }
+    async requestCallback(details) {
+        if (!this.textResponse) {
+            return;
+        }
+
+        const {requestId, responseHeaders} = details;
+
+        // Detect charset
+        let charset = this.constructor.detectCharset(responseHeaders);
+        if (!charset && !this.constructor.textResources.has(details.type)) {
+            // If the charset is undefined,
+            // and the resource type is unknown,
+            // then skip the request.
+            return;
         }
 
         /**
          * @type {Object}
          */
         const filter = browser.webRequest.filterResponseData(requestId);
-        const decoder = new TextDecoder(charset);
+        const decoder = new TextDecoder(
+            charset || this.constructor.defaultEncoding
+        );
         const encoder = new TextEncoder();
 
-        let responseBody = '';
+        // Request body as a property of the request details
+        details.responseBody = '';
         filter.ondata = (event) => {
-            responseBody += decoder.decode(event.data, {stream: true});
+            details.responseBody += decoder.decode(event.data, {stream: true});
         };
 
         filter.onstop = async () => {
-            filter.write(encoder.encode(await this.modifyResponse(
-                responseBody
+            filter.write(encoder.encode(await this.getResponse(
+                details
             )));
             filter.close();
         };
@@ -48,58 +51,46 @@ class ResponseRule extends RequestRule {
 
     /**
      * @private
-     * @param {string} responseBody
-     * @return {Promise<string>}
+     * @param {RequestDetails} details
+     * @return {(Promise<string>|string)}
      */
-    async modifyResponse(responseBody) {
+    getResponse(details) {
         switch (this.textType) {
             case 'plaintext':
                 return this.textResponse;
             case 'JavaScript':
-                return Interpreter.run({
-                    functionBody: this.textResponse,
-                    args: {responseBody},
-                });
+                return this.constructor.scriptModify(
+                    details,
+                    this.textResponse
+                );
         }
     }
 
     /**
      * Get charset from Content-Type header.
      * @param {Object[]} responseHeaders
-     * @return {string}
+     * @return {(string|void)}
      */
-    static getCharset(responseHeaders) {
-        // Find Content-Type header
+    static detectCharset(responseHeaders) {
+        // Get the Content-Type header
         const header = responseHeaders.find(({name}) => (
             name.toLowerCase() === 'content-type'
         ));
         if (!header) {
-            // No content type is specified
-            return '';
+            return;
         }
         const value = header.value.toLowerCase();
 
-        const matchType = value.match(/[a-z]+\/[0-9a-z\-+.]+/);
-        if (
-            !matchType
-            || !this.textSigns.some(sign => matchType[0].includes(sign))
-        ) {
-            // Content type is not recognized or not supported
-            return '';
+        const charset = this.encodings.find(charset => value.includes(charset));
+        if (charset) {
+            return charset;
         }
-
-        const matchCharset = value.match(/charset\s*=\s*['"]?([\w\- ]+)/);
-        if (!matchCharset) {
+        // If the charset is not detected,
+        // but the content type is a text type,
+        // return the default charset.
+        if (this.textTypes.some(textType => value.includes(textType))) {
             return this.defaultEncoding;
         }
-
-        const [, charset] = matchCharset;
-        if (!this.encodings.has(charset)) {
-            // The specified charset is not supported
-            return '';
-        }
-
-        return charset;
     }
 
     /**
@@ -107,13 +98,6 @@ class ResponseRule extends RequestRule {
      */
     setTextResponse(textResponse) {
         this.textResponse = textResponse;
-    }
-
-    /**
-     * @param {string} textType
-     */
-    setTextType(textType) {
-        this.textType = textType;
     }
 }
 
@@ -130,7 +114,6 @@ ResponseRule.instances = new Map;
 ResponseRule.default = {
     ...ResponseRule.default,
     textResponse: '',
-    textType: 'plaintext',
 };
 
 /**
@@ -139,7 +122,6 @@ ResponseRule.default = {
 ResponseRule.setters = {
     ...ResponseRule.setters,
     textResponse: 'setTextResponse',
-    textType: 'setTextType',
 };
 
 /**
@@ -158,26 +140,36 @@ ResponseRule.extraInfoSpec = [
 ];
 
 /**
- * If Content-Type includes one of these signs,
- *     it's supposed to be text.
+ * Types of text resources.
+ * @type {Set<string>}
+ */
+ResponseRule.textResources = new Set([
+    'main_frame',
+    'sub_frame',
+    'web_manifest',
+    'script',
+    'stylesheet',
+]);
+
+/**
+ * Content types as texts.
  * @type {string[]}
  */
-ResponseRule.textSigns = [
+ResponseRule.textTypes = [
     'text',
     'javascript',
     'css',
     'json',
     'typescript',
     'xml',
-    'rtf',
 ];
 
 /**
  * Supported (common) encodings.
- * @type {Set<string>}
+ * @type {string[]}
  * @see {@link https://en.wikipedia.org/wiki/Character_encoding}
  */
-ResponseRule.encodings = new Set([
+ResponseRule.encodings = [
     'utf-8',
     'ascii',
     'iso-8859-1',
@@ -214,11 +206,9 @@ ResponseRule.encodings = new Set([
     'gb18030',
     'big5',
     'euc-kr',
-]);
+];
 
 /**
- * Though HTTP 1.1 default encoding is ISO-8859-1,
- *     UTF-8 is probably more common.
  * @type {string}
  */
 ResponseRule.defaultEncoding = 'utf-8';
@@ -228,5 +218,4 @@ Factory.register('responseRules', ResponseRule);
 /**
  * @typedef {RequestRuleDetails} ResponseRuleDetails
  * @property {string} [textResponse]
- * @property {string} [textType]
  */

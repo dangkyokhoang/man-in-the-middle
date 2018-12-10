@@ -1,10 +1,10 @@
 {
   "manifest_version": 2,
   "name": "Man in the Middle",
-  "version": "3.2.0",
-  "description": "Allow user to block or redirect requests, modify request headers and responses, inject JavaScript and CSS into pages.",
+  "version": "3.3.0",
+  "description": "Modify requests, inject JavaScript and CSS into pages.",
   "developer": {
-    "name": "Hoàng",
+    "name": "Hoang",
     "url": "https://github.com/dangkyokhoang/Man-in-the-Middle/"
   },
   "applications": {

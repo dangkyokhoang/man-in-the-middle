@@ -75,7 +75,9 @@
             Object.getOwnPropertyNames(window),
             Object.getOwnPropertyNames(EventTarget.prototype)
         ).forEach(property => {
-            exceptions.has(property) || delete window[property];
+            try {
+                exceptions.has(property) || delete window[property];
+            } catch (error) {}
         });
     })();
 
@@ -100,18 +102,23 @@
             ].filter(variable => !params.includes(variable));
 
             // This makes sure the return value is cloneable
-            return await eval(
+            const result = await eval(
                 `async(${params.toString()})=>{`
                 + `let ${restrictions.toString()};`
                 + `${functionBody}`
                 + `}`
             ).apply(null, params.map(param => args[param]));
+            if (result) {
+                return result;
+            } else {
+                return Promise.reject('No value was returned');
+            }
         } catch (value) {
             return Promise.reject(
                 // Some types may need converting to string
                 [Error, Date, RegExp].some(type => value instanceof type)
                     ? String(value)
-                    : value
+                    : value || 'An unknown value was thrown'
             );
         }
     };

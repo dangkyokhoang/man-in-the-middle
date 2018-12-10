@@ -3,50 +3,56 @@
 /**
  * Request header modification rule.
  */
-class HeaderRule extends RequestRule {
+class HeaderRule extends RequestModificationRule {
     /**
      * Modify request or response headers.
-     * @param {string} url
-     * @param {Object} extraInfo
-     * @return {(Promise<Object<Object[]>>|void)}
+     * @param {RequestDetails} details
+     * @return {(Promise<Object>|Object)}
      * @see {@link https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/webRequest/onBeforeRequest}
      */
-    requestCallback(url, extraInfo) {
+    requestCallback(details) {
         if (!this.textHeaders) {
             return;
         }
 
-        return this.modifyHeaders(extraInfo[this.headerType]).then(headers => ({
-            [this.headerType]: headers,
-        }));
-    }
-
-    /**
-     * @private
-     * @param {Object[]} headers
-     * @return {Promise<Object[]>}
-     */
-    async modifyHeaders(headers) {
+        const headers = details[this.headerType];
         switch (this.textType) {
             case 'plaintext':
-                return this.constructor.modify(headers, this.headers);
+                return {
+                    [this.headerType]: this.textModify(headers),
+                };
             case 'JavaScript':
-                return Interpreter.run({
-                    functionBody: this.methodModify() + this.textHeaders,
-                    args: {
-                        [this.headerType]: headers,
-                    },
-                });
+                return this.constructor.scriptModify(
+                    details,
+                    this.getHeaderMethods() + this.textHeaders
+                ).then(headers => ({
+                    [this.headerType]: headers,
+                }));
         }
     }
 
     /**
      * @private
      * @param {Object[]} headers
-     * @param {Array[]} newHeaders
      */
-    static modify(headers, newHeaders) {
-        newHeaders.forEach(([name, value]) => {
+    textModify(headers) {
+        if (!this.arrayHeaders) {
+            // Convert text headers to array of new headers
+            const lines = this.textHeaders.trim().split(/\s*[\r\n]\s*/);
+
+            // Convert lines to arrays of pairs, remove invalid headers
+            this.arrayHeaders = lines.reduce((headers, textHeader) => {
+                const matches = textHeader.match(/(.+?)\s*:\s*(.*)/);
+                if (matches) {
+                    // [, name, value]
+                    matches.shift();
+                    headers.push(matches);
+                }
+                return headers;
+            }, []);
+        }
+
+        this.arrayHeaders.forEach(([name, value]) => {
             // Find the current header in the list of existing headers
             const header = headers.find(header => (
                 header.name.toLowerCase() === name.toLowerCase()
@@ -66,21 +72,32 @@ class HeaderRule extends RequestRule {
     }
 
     /**
-     * Generate a string to add the method 'modify' to the array of headers.
+     * Additional methods for the header array.
      * @return {string}
-     * @see {HeaderRule.modifyHeaders}
-     * @see {HeaderRule.modify}
      */
-    methodModify() {
-        return `${this.headerType}.modify=(function(newHeaders){`
-            + `newHeaders.forEach(([name,value])=>{`
-            + `const header=this.find(header=>`
-            + `header.name.toLowerCase()===name.toLowerCase());`
-            + `if(header){header.value=value;}`
-            + `else if(value){this.push({name,value});}`
-            + `});`
-            + `return this;`
-            + `}).bind(${this.headerType});`;
+    getHeaderMethods() {
+        return Object.entries(this.constructor.headerMethods).reduce(
+            /**
+             * @param {string} methods
+             * @param {string} name
+             * @param {string} args
+             * @param {string} functionBody
+             * @return {string}
+             */
+            (methods, [name, [args, functionBody]]) => {
+                if (
+                    this.textHeaders.includes(`${this.headerType}.${name}`)
+                    || methods.includes(`this.${name}`)
+                ) {
+                    methods = `${this.headerType}.${name}=`
+                        + `(function(${args}){${functionBody}`
+                        + `}).bind(${this.headerType});`
+                        + methods;
+                }
+                return methods;
+            },
+            ''
+        );
     }
 
     /**
@@ -88,35 +105,7 @@ class HeaderRule extends RequestRule {
      */
     setTextHeaders(textHeaders) {
         this.textHeaders = textHeaders;
-
-        // This updates the key 'headers'
-        if (this.hasOwnProperty('textType')) {
-            this.setTextType(this.textType);
-        }
-    }
-
-    /**
-     * @param {string} textType
-     */
-    setTextType(textType) {
-        this.textType = textType;
-
-        if (this.textType === 'plaintext') {
-            // Convert text headers to array of new headers for later use
-            const lines = this.textHeaders.trim().split(/\s*[\r\n]\s*/);
-            // Convert strings to arrays, remove invalid headers
-            this.headers = lines.reduce((headers, textHeader) => {
-                const matches = textHeader.match(/(.+?)\s*:\s*(.*)/);
-                if (matches) {
-                    // [, name, value]
-                    matches.shift();
-                    headers.push(matches);
-                }
-                return headers;
-            }, []);
-        } else {
-            this.headers = null;
-        }
+        this.arrayHeaders = null;
     }
 
     /**
@@ -148,7 +137,6 @@ HeaderRule.instances = new Map;
 HeaderRule.default = {
     ...HeaderRule.default,
     textHeaders: '',
-    textType: 'plaintext',
     headerType: 'requestHeaders',
 };
 
@@ -158,7 +146,6 @@ HeaderRule.default = {
 HeaderRule.setters = {
     ...HeaderRule.setters,
     textHeaders: 'setTextHeaders',
-    textType: 'setTextType',
     headerType: 'setHeaderType',
 };
 
@@ -186,12 +173,35 @@ HeaderRule.extraInfoSpecs = {
     ],
 };
 
+/**
+ * Header array methods.
+ * @type {Object<string[]>}
+ */
+HeaderRule.headerMethods = {
+    modify: [
+        'pairs',
+        `pairs.forEach(([name,value])=>this.set(name,value));`
+        + `return this;`
+    ],
+    set: [
+        'name,value',
+        `const header=this.get(name);`
+        + `if(header){header.value=value;}`
+        + `else if(value){this.push({name,value});}`
+        + `return this;`,
+    ],
+    get: [
+        'name',
+        `return this.find(`
+        + `header=>header.name.toLowerCase()===name.toLowerCase());`,
+    ],
+};
+
 Factory.register('headerRules', HeaderRule);
 
 /**
- * @typedef {RequestRuleDetails} HeaderRuleDetails
+ * @typedef {RequestModificationRuleDetails} HeaderRuleDetails
  * @property {string} [textHeaders]
- * @property {string} [textType]
  * @property {HeaderType} [headerType]
  */
 

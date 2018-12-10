@@ -9,7 +9,8 @@ Allow user to block or redirect requests, modify request headers and responses, 
 ---
 
 **[Get Man in the Middle](https://addons.mozilla.org/en-US/firefox/addon/man-in-the-middle/)** on Firefox Add-ons.  
-**[Get help](#rules)** writing rules.
+**[Get help](#rules)** writing rules.  
+**[See changes](https://github.com/dangkyokhoang/Man-in-the-Middle/projects/1)** in the Project board.
 
 Use cases:
 - Block or redirect websites and requests;
@@ -153,9 +154,11 @@ To modify request or response headers.
 - Type [Restricted JavaScript](#restricted-javascript):  
   _Returns request or response headers._
   - The code must `return` an array of objects, each objects has two properties: `'name'` and `'value'`.
-  - Depending on [Header type](#header-type),
-    the code will be passed an argument `requestHeaders` or `responseHeaders`, which is the list of the existing headers.
-  - The argument `requestHeaders` or `responseHeaders` has method `modify` which makes it easy to modify headers (See the below examples).
+  - The code may access `requestHeaders` or `responseHeaders`, depending on the [Header type](#header-type).
+  - The header array `requestHeaders` or `responseHeaders` has its methods to make it easier to modify headers:
+    - `get(name)` gets header by name;
+    - `set(name, value)` replaces header value if it exists, or adds a new header;
+    - `modify([ ...[name, value] ])` sets multiple pairs of headers.
   - Examples:
     ```` JavaScript
     // Header type: Request headers
@@ -163,16 +166,27 @@ To modify request or response headers.
     throw requestHeaders;
     ````
     ```` JavaScript
+    // This line
+    const acceptHeader = requestHeaders.get('Accept');
+    //     equals to the below
+    const acceptHeader = const acceptHeader = requestHeaders.find(({name}) => (
+        name.toLowerCase() === 'accept'
+    ));
+    ````
+    ```` JavaScript
     // Header type: Request headers
     
     // This line
     requestHeaders.modify([ ['Accept', '*'] ]);
-    //   equals to the below
-    const acceptHeader = requestHeaders.find(({name}) => (
-        name.toLowerCase() === 'accept'
-    ));
-    // Accept: *
-    acceptHeader && acceptHeader.value = '*';
+    //     equals to this line
+    requestHeaders.set('Accept', '*');
+    //     and equals to the below lines
+    const acceptHeader = requestHeaders.get('Accept');
+    if (acceptHeader) {
+        acceptHeader.value = '*';
+    } else {
+        requestHeaders.push({name: 'Accept', value: '*'});
+    }
     
     return requestHeaders;
     ````
@@ -180,7 +194,7 @@ To modify request or response headers.
     // Header type: Request headers
     // This line
     requestHeaders.modify([ ['Referer', ''] ]);
-    //   equals to the below
+    //    equals to the below
     const refererHeaderIndex = requestHeaders.findIndex(({name}) => (
         name.toLowerCase() === 'referer'
     ));
@@ -217,7 +231,7 @@ To modify network responses.
 - Type [Restricted JavaScript](#restricted-javascript):  
   _Returns response body._
   - The code must `return` a string which is the response body.
-  - The code will be passed an argument `responseBody`, which is the response from the server.
+  - The code may access `responseBody` and `responseHeaders`.
   - Examples:
     ```` JavaScript
     // Site: http://internetbadguys.com/
@@ -278,11 +292,14 @@ A string that is not a [RegExp pattern](#regexp-pattern).
 
 ### Restricted JavaScript
 A JavaScript function body that will be executed inside a sandbox.
-- The code may access only built-in objects and some APIs, which are:
+- The code may use only built-in objects and some APIs, which are:
   - `Object`, `Array`, `String`, `RegExp`, `JSON`, `Map`, `Set`, `Promise`, ...built-in objects;
   - `isFinite`, `isNaN`, `parseInt`, `parseFloat`;
   - `encodeURI`, `encodeURIComponent`, `decodeURI`, `decodeURIComponent`;
   - `crypto`, `performance`, `atob`, `btoa`, `fetch` and `XMLHttpRequest`.
+- The code may access request details and tab details, which are:
+  - `url`, `originUrl`, `documentUrl`, `method`, `proxyInfo`, `type` (the type of the requested resource), `timeStamp`;
+  - `incognito` (`true` if tab in private browsing), `pinned` (`true` if tab is pinned).
 - The function is `async`, hence, `await` can be used to perform asynchronous tasks.
 - The code should always `return` a value.
 - The code may `throw` a cloneable value. To see error logs, open the `devtools > Console`.

@@ -149,6 +149,37 @@ class Utils {
             return false;
         });
     }
+
+    /**
+     * Compare two versions.
+     * @param {string} [version1]
+     * @param {string} [version2]
+     * @return {Object}
+     */
+    static versionCompare(version1 = '', version2 = '') {
+        // Parts of a version string
+        const parts = ['major', 'minor', 'patch'];
+
+        const version1Parts = version1.split('.').map(Number);
+        const version2Parts = version2.split('.').map(Number);
+
+        for (let i = 0; i < parts.length; i++) {
+            if (version1Parts[i] < version2Parts[i]) {
+                return {
+                    result: -1,
+                    difference: parts[i],
+                };
+            } else if (version1Parts[i] > version2Parts[i]) {
+                return {
+                    result: 1,
+                    difference: parts[i],
+                };
+            }
+        }
+        return {
+            result: 0,
+        };
+    }
 }
 
 Binder.bindOwn(Utils);

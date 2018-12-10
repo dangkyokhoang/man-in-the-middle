@@ -7,11 +7,14 @@ class BlockingRule extends RequestRule {
     /**
      * Block or redirect requests.
      * @param {string} url
-     * @param {Object} extraInfo
-     * @return {browser.webRequest.BlockingResponse}
+     * @return {(browser.webRequest.BlockingResponse|void)}
      * @see {@link https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/webRequest/onBeforeRequest}
      */
-    async requestCallback(url, extraInfo) {
+    requestCallback({url}) {
+        if (Utils.testUrl(url, this.constructor.defaultUrlExceptions, false)) {
+            return;
+        }
+
         // If redirect URL is set,
         // redirect the request to the redirect URL.
         // Otherwise, cancel the request.
@@ -86,6 +89,16 @@ BlockingRule.setters = {
  * @type {Object}
  */
 BlockingRule.requestEvent = browser.webRequest.onBeforeRequest;
+
+/**
+ * @private
+ * @type {Object}
+ */
+BlockingRule.defaultUrlExceptions = {
+    url: [
+        {urlMatches: browser.runtime.getURL('/')},
+    ],
+};
 
 Factory.register('blockingRules', BlockingRule);
 

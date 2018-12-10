@@ -7,11 +7,10 @@
 class RequestRule extends Rule {
     /**
      * @abstract
-     * @param {!string} url
-     * @param {Object} [extraInfo]
+     * @param {RequestDetails} details
      * @return {Object}
      */
-    requestCallback(url, extraInfo) {
+    requestCallback(details) {
     }
 
     /**
@@ -35,12 +34,20 @@ class RequestRule extends Rule {
     }
 
     /**
-     * @param {RequestDetails}
+     * @param {RequestDetails} details
      * @return {(Object|void)}
      */
-    filterRequest({url, originUrl, method, ...extraInfo}) {
-        originUrl = originUrl || url;
+    filterRequest(details) {
+        // If origin URL or document URL is undefined,
+        // let it be the request URL.
+        if (!details.originUrl) {
+            details.originUrl = details.url;
+        }
+        if (!details.documentUrl) {
+            details.documentUrl = details.url;
+        }
 
+        const {url, originUrl, method} = details;
         if (
             Utils.testUrl(url, this.urlFilter, false)
             && !Utils.testUrl(url, this.urlExceptions, false)
@@ -53,7 +60,7 @@ class RequestRule extends Rule {
                 && !Utils.testUrl(originUrl, this.originUrlExceptions, false)
             )
         ) {
-            return this.requestCallback(url, extraInfo);
+            return this.requestCallback(details);
         }
     }
 
@@ -118,8 +125,13 @@ RequestRule.extraInfoSpec = ['blocking'];
 /**
  * @typedef {object} RequestDetails
  * @property {string} url
+ * @property {string} originUrl
+ * @property {string} documentUrl
  * @property {string} method
  * @property {Object[]} requestHeaders
  * @property {Object[]} responseHeaders
+ * @property {string} responseBody
  * @property {string} requestId
+ * @property {string} type
+ * @property {number} tabId
  */

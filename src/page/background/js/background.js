@@ -45,5 +45,29 @@ Runtime.addEventListener('message', async ({sender, request, details}) => {
     }
 });
 
+Runtime.addEventListener('installed', async () => {
+    const databaseVersion = await Storage.get('version');
+    const version = Runtime.getManifest('version');
+
+    const {result, difference} = Utils.versionCompare(
+        databaseVersion,
+        version
+    );
+
+    // Version unchanged or
+    //     the extension version is lower than the database version
+    if (result !== -1) {
+        return;
+    }
+
+    // If there's a major or minor update (not a patch one),
+    // open the options page.
+    if (difference === 'major' || difference === 'minor') {
+        await Tabs.openOptionsPage();
+    }
+
+    await Storage.set({version});
+});
+
 // Open the options page if user clicks the extension icon
 BrowserAction.addListener(Tabs.openOptionsPage);
