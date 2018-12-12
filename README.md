@@ -8,11 +8,17 @@ Allow user to block or redirect requests, modify request headers and responses, 
 
 ---
 
-**[Get Man in the Middle](https://addons.mozilla.org/en-US/firefox/addon/man-in-the-middle/)** on Firefox Add-ons.  
-**[Get help](#rules)** writing rules.  
-**[See changes](https://github.com/dangkyokhoang/Man-in-the-Middle/projects/1)** in the Project board.
+## Helpful links
 
-Use cases:
+**[Get Man in the Middle](https://addons.mozilla.org/en-US/firefox/addon/man-in-the-middle/)** on Firefox Add-ons.  
+**[Get Man in the Middle](https://chrome.google.com/webstore/detail/man-in-the-middle/mfgcopdhimkemcnlhkohjbdjgahmagil)** on Chrome Store*.  
+**[Get help](https://github.com/dangkyokhoang/Man-in-the-Middle#rules)** writing rules.  
+**[See changes](https://github.com/dangkyokhoang/Man-in-the-Middle/projects/1)** in the Project board.  
+
+<small>* _Some features won't be available in the compatible version for Chrome.
+[See this](https://github.com/dangkyokhoang/Man-in-the-Middle/projects/1#card-15622712) for more._</small>
+
+## Use cases
 - Block or redirect websites and requests;
 - Add, modify or remove request and response headers;
 - Modify response data;
