@@ -1,0 +1,5 @@
+.information,
+.main {
+    border-bottom: 1px solid var(--gray-0);
+    padding-bottom: 1em;
+}

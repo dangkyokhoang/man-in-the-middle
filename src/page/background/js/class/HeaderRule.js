@@ -3,7 +3,7 @@
 /**
  * Request header modification rule.
  */
-class HeaderRule extends RequestModificationRule {
+class HeaderRule extends RequestRule {
     /**
      * Modify request or response headers.
      * @param {RequestDetails} details
@@ -22,7 +22,7 @@ class HeaderRule extends RequestModificationRule {
                     [this.headerType]: this.textModify(headers),
                 };
             case 'JavaScript':
-                return this.constructor.scriptModify(
+                return this.constructor.executeScript(
                     details,
                     this.getHeaderMethods() + this.textHeaders
                 ).then(headers => ({
@@ -112,15 +112,19 @@ class HeaderRule extends RequestModificationRule {
      * @param {HeaderType} headerType
      */
     setHeaderType(headerType) {
+        const active = this.active;
+        this.deactivate();
+
         this.headerType = headerType;
 
         this.constructor.requestEvent = (
             this.constructor.requestEvents[this.headerType]
         );
-
         this.constructor.extraInfoSpec = (
             this.constructor.extraInfoSpecs[this.headerType]
         );
+
+        active && this.activate();
     }
 }
 
@@ -200,7 +204,7 @@ HeaderRule.headerMethods = {
 Factory.register('headerRules', HeaderRule);
 
 /**
- * @typedef {RequestModificationRuleDetails} HeaderRuleDetails
+ * @typedef {RequestRuleDetails} HeaderRuleDetails
  * @property {string} [textHeaders]
  * @property {HeaderType} [headerType]
  */

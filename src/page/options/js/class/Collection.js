@@ -290,6 +290,8 @@ Collection.types = {
         'name',
         'urlFilters',
         'method',
+        'textRedirectUrl',
+        'textType',
         'redirectUrl',
         'originUrlFilters',
         'enabled',
@@ -391,11 +393,19 @@ Collection.instructions = {
         },
     },
     // BlockingRule
+    textRedirectUrl: {
+        valueType: 'string',
+        input: {
+            tagName: 'TEXTAREA',
+            label: 'Text redirect URL',
+            placeholder: 'Plaintext or JavaScript to redirect requests',
+        },
+    },
     redirectUrl: {
         valueType: 'string',
         input: {
             tagName: 'INPUT',
-            label: 'Redirect URL',
+            label: 'Redirect URL (DEPRECATED, DO NOT USE)',
             placeholder: 'URL to redirect to or blank to block',
         },
     },

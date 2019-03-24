@@ -6,20 +6,33 @@
 class BlockingRule extends RequestRule {
     /**
      * Block or redirect requests.
-     * @param {string} url
+     * @param {RequestDetails} details
      * @return {(browser.webRequest.BlockingResponse|void)}
      * @see {@link https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/webRequest/onBeforeRequest}
      */
-    requestCallback({url}) {
-        if (Utils.testUrl(url, this.constructor.defaultUrlExceptions, false)) {
-            return;
-        }
-
+    async requestCallback(details) {
         // If redirect URL is set,
         // redirect the request to the redirect URL.
         // Otherwise, cancel the request.
-        const redirectUrl = this.getRedirectUrl(url);
-        return redirectUrl ? {redirectUrl} : {cancel: true};
+        const redirectUrl = await this.getRedirectUrl(details);
+
+        if (redirectUrl) {
+            if (redirectUrl === details.url) {
+                return {cancel: false};
+            }
+
+            return {redirectUrl};
+        }
+
+        return {cancel: true};
+    }
+
+    /**
+     * @param {string} textRedirectUrl
+     * @return {void}
+     */
+    setTextRedirectUrl(textRedirectUrl) {
+        this.textRedirectUrl = textRedirectUrl;
     }
 
     /**
@@ -32,15 +45,28 @@ class BlockingRule extends RequestRule {
 
     /**
      * @private
-     * @param {string} url
+     * @param {RequestDetails} details
      * @return {string}
      */
-    getRedirectUrl(url) {
-        if (!this.redirectUrl) {
+    async getRedirectUrl(details) {
+        let redirectUrl;
+        if (this.textRedirectUrl) {
+            if (this.textType === 'JavaScript') {
+                return await this.constructor.executeScript(
+                    details,
+                    this.textRedirectUrl
+                );
+            }
+
+            redirectUrl = this.textRedirectUrl;
+        } else {
+            redirectUrl = this.redirectUrl;
+        }
+        if (!redirectUrl) {
             return '';
         }
 
-        let redirectUrl = this.redirectUrl;
+        const {url} = details;
 
         // Find a RegExp filter that matches the URL
         const filter = this.urlFilter.url.find(({urlMatches}) => (
@@ -73,6 +99,7 @@ BlockingRule.instances = new Map;
  */
 BlockingRule.default = {
     ...BlockingRule.default,
+    textRedirectUrl: '',
     redirectUrl: '',
 };
 
@@ -81,6 +108,7 @@ BlockingRule.default = {
  */
 BlockingRule.setters = {
     ...BlockingRule.setters,
+    textRedirectUrl: 'setTextRedirectUrl',
     redirectUrl: 'setRedirectUrl',
 };
 

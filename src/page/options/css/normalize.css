@@ -17,9 +17,13 @@
     letter-spacing: 0.0125em;
 }
 
-html {
-    font-size: 13px;
+html, body {
+    font-size: 11px;
     font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+body {
+    margin: 2em;
 }
 
 h1, h2 {

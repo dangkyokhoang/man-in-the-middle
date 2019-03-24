@@ -3,7 +3,7 @@
 /**
  * Request response body modification rule.
  */
-class ResponseRule extends RequestModificationRule {
+class ResponseRule extends RequestRule {
     /**
      * Modify the response body of the request.
      * @param {RequestDetails} details
@@ -42,9 +42,9 @@ class ResponseRule extends RequestModificationRule {
         };
 
         filter.onstop = async () => {
-            filter.write(encoder.encode(await this.getResponse(
-                details
-            )));
+            const responseBody = await this.getResponse(details);
+
+            filter.write(encoder.encode(responseBody || details.responseBody));
             filter.close();
         };
     }
@@ -59,7 +59,7 @@ class ResponseRule extends RequestModificationRule {
             case 'plaintext':
                 return this.textResponse;
             case 'JavaScript':
-                return this.constructor.scriptModify(
+                return this.constructor.executeScript(
                     details,
                     this.textResponse
                 );

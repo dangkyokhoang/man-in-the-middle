@@ -1,5 +1,7 @@
 # Man in the Middle
 
+[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+
 _Firefox Extension._
 
 ---
@@ -8,17 +10,11 @@ Allow user to block or redirect requests, modify request headers and responses, 
 
 ---
 
-## Helpful links
-
 **[Get Man in the Middle](https://addons.mozilla.org/en-US/firefox/addon/man-in-the-middle/)** on Firefox Add-ons.  
-**[Get Man in the Middle](https://chrome.google.com/webstore/detail/man-in-the-middle/mfgcopdhimkemcnlhkohjbdjgahmagil)** on Chrome Store*.  
-**[Get help](https://github.com/dangkyokhoang/Man-in-the-Middle#rules)** writing rules.  
-**[See changes](https://github.com/dangkyokhoang/Man-in-the-Middle/projects/1)** in the Project board.  
+**[Get help](#rules)** writing rules.  
+**[See changes](https://github.com/dangkyokhoang/man-in-the-middle/projects/1)** in the Project board.
 
-<small>* _Some features won't be available in the compatible version for Chrome.
-[See this](https://github.com/dangkyokhoang/Man-in-the-Middle/projects/1#card-15622712) for more._</small>
-
-## Use cases
+Use cases:
 - Block or redirect websites and requests;
 - Add, modify or remove request and response headers;
 - Modify response data;
@@ -54,6 +50,8 @@ Select rule properties for more details.
 Rules to block or redirect requests.  
 - [URL filters (Required)](#url-filters);
 - [Method](#method);
+- [Text redirect URL](#text-redirect-url);
+- [Text type](#text-type);
 - [Redirect URL](#redirect-url);
 - [Origin URL filters](#origin-url-filters).
 
@@ -110,16 +108,36 @@ Filters `request method`s.
 - A `request method` is satisfied if it equals to the `method`.
 - Rules: [Blocking Rules](#blocking-rules), [Header Rules](#header-rules) and [Response Rules](#response-rules).
 
+### Text redirect URL
+To redirect or block requests.
+- Format: `Plaintext` or [Restricted JavaScript](#restricted-javascript).
+- Type `Plaintext`:
+  _A `URL` to redirect `request`s to._
+  - If not set, matched requests are blocked.
+  - Parameters `'$n'` (`1 <= <int>n <= 100`), in a `redirect URL` are replaced with capture groups from `RegExp pattern` [URL filter](#url-filters).
+  - Examples:
+    ````
+    Force secure connections for all HTTP requests.
+    URL filter:   /^http:(.*)/
+    Text redirect URL: https:$1
+    ````
+- Type [Restricted JavaScript](#restricted-javascript):  
+  _Returns a `URL` to redirect `request`s to._
+  - The code must `return` a string `URL`.
+    - If `URL` is empty, matched requests are blocked;
+    - If `URL` equals to the request's URL, the request is neither blocked nor redirected;
+    - Otherwise, the request is redirected to `URL`.
+  - Examples:
+    ```` JavaScript
+    // Facebook hours restricted to the range from 07:00 PM to 11:59 PM 
+    const date = new Date();
+    const hour = date.getHours();
+    return 19 <= hour && hour <= 23 ? url : '';
+    ````
+- Rule: [Blocking Rules](#blocking-rules).
+
 ### Redirect URL
-A `URL` to redirect `request`s to.
-- If not set, matched requests are blocked.
-- Parameters `'$n'` (`1 <= <int>n <= 100`), in a `redirect URL` are replaced with capture groups from `RegExp pattern` [URL filter](#url-filters).
-- Examples:
-  ````
-  Force HTTPS for all network requests.
-  URL filter:   /^http:(.*)/
-  Redirect URL: https:$1
-  ````
+DEPRECATED since version 3.4.0. Use [Text redirect URL](#text-redirect-url) instead.
 - Rules: [Blocking Rules](#blocking-rules).
 
 ### Origin URL filters
@@ -223,7 +241,7 @@ To modify request or response headers.
 
 ### Text type
 `'Plaintext'` or`'JavaScript'`.
-- Rule: [Header Rules](#header-rules) and [Response Rules](#response-rules).
+- Rule: [Blocking Rules](#blocking-rules), [Header Rules](#header-rules) and [Response Rules](#response-rules).
 
 ### Header type
 `'Request headers'` or `'Response headers'`.
@@ -316,6 +334,6 @@ A JavaScript function body that will be executed inside a sandbox.
 ## Others
 
 - If you have questions or need help, feel free to message me at:
-  [Facebook/dangkyokhoang](https://www.facebook.com/dangkyokhoang).
+  [facebook/dangkyokhoang](https://www.facebook.com/dangkyokhoang).
 - If you have feature requests, suggestions, or you've found bugs, raise issues at:
-  [Man-in-the-Middle/issues](https://github.com/dangkyokhoang/Man-in-the-Middle/issues).
+  [man-in-the-middle/issues](https://github.com/dangkyokhoang/man-in-the-middle/issues).

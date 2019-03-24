@@ -14,6 +14,39 @@ class RequestRule extends Rule {
     }
 
     /**
+     * @protected
+     * @param {RequestDetails} details
+     * @param {string} functionBody
+     * @return {Promise}
+     */
+    static async executeScript(details, functionBody) {
+        const args = {};
+
+        // Add request details to the arguments
+        this.requestDetails.forEach(detail => {
+            if (functionBody.includes(detail)) {
+                args[detail] = details[detail];
+            }
+        });
+
+        // Add tab details to the arguements
+        if (this.tabDetails.some(detail => functionBody.includes(detail))) {
+            // Add tab details to the arguments
+            const tab = await Tabs.get(details.tabId);
+            this.tabDetails.forEach(detail => {
+                if (functionBody.includes(detail)) {
+                    args[detail] = tab[detail];
+                }
+            });
+        }
+
+        return Interpreter.run({
+            functionBody,
+            args,
+        }).catch(Logger.log);
+    }
+
+    /**
      * @inheritDoc
      */
     register() {
@@ -71,6 +104,13 @@ class RequestRule extends Rule {
     setMethod(method) {
         this.method = method;
     }
+
+    /**
+     * @param {string} textType
+     */
+    setTextType(textType) {
+        this.textType = textType;
+    }
 }
 
 /**
@@ -80,6 +120,7 @@ class RequestRule extends Rule {
 RequestRule.default = {
     ...RequestRule.default,
     method: '',
+    textType: 'plaintext',
 };
 
 /**
@@ -88,6 +129,7 @@ RequestRule.default = {
 RequestRule.setters = {
     ...RequestRule.setters,
     method: 'setMethod',
+    textType: 'setTextType',
 };
 
 /**
@@ -103,8 +145,35 @@ RequestRule.requestEvent = null;
 RequestRule.extraInfoSpec = ['blocking'];
 
 /**
+ * Request details accessible inside JavaScript function.
+ * @type {string[]}
+ */
+RequestRule.requestDetails = [
+    'requestHeaders',
+    'responseHeaders',
+    'responseBody',
+    'url',
+    'originUrl',
+    'documentUrl',
+    'method',
+    'proxyInfo',
+    'type',
+    'timeStamp',
+];
+
+/**
+ * Tab details accessible inside JavaScript function.
+ * @type {string[]}
+ */
+RequestRule.tabDetails = [
+    'incognito',
+    'pinned',
+];
+
+/**
  * @typedef {RuleDetails} RequestRuleDetails
  * @property {RequestMethod} [method]
+ * @property {string} [textType]
  */
 
 /**
