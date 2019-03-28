@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Man in the Middle",
-  "version": "3.4.0",
+  "version": "3.4.1",
   "description": "Modify requests, inject JavaScript and CSS into pages",
   "developer": {
     "name": "Hoang",

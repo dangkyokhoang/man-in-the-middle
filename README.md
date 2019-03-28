@@ -111,14 +111,14 @@ Filters `request method`s.
 ### Text redirect URL
 To redirect or block requests.
 - Format: `Plaintext` or [Restricted JavaScript](#restricted-javascript).
-- Type `Plaintext`:
+- Type `Plaintext`:  
   _A `URL` to redirect `request`s to._
   - If not set, matched requests are blocked.
   - Parameters `'$n'` (`1 <= <int>n <= 100`), in a `redirect URL` are replaced with capture groups from `RegExp pattern` [URL filter](#url-filters).
   - Examples:
     ````
     Force secure connections for all HTTP requests.
-    URL filter:   /^http:(.*)/
+    URL filter: /^http:(.*)/
     Text redirect URL: https:$1
     ````
 - Type [Restricted JavaScript](#restricted-javascript):  
@@ -129,7 +129,9 @@ To redirect or block requests.
     - Otherwise, the request is redirected to `URL`.
   - Examples:
     ```` JavaScript
-    // Facebook hours restricted to the range from 07:00 PM to 11:59 PM 
+    // Facebook hours restricted to the range from 07:00 PM to 11:59 PM
+    // URL filter: facebook.com, messenger.com
+    // Text redirect URL:
     const date = new Date();
     const hour = date.getHours();
     return 19 <= hour && hour <= 23 ? url : '';
@@ -327,7 +329,7 @@ A JavaScript function body that will be executed inside a sandbox.
 - The function is `async`, hence, `await` can be used to perform asynchronous tasks.
 - The code should always `return` a value.
 - The code may `throw` a cloneable value. To see error logs, open the `devtools > Console`.
-- Properties: [Text headers](#text-headers) and [Text response](#text-response).
+- Properties: [Text redirect URL](#text-redirect-url), [Text headers](#text-headers) and [Text response](#text-response).
 
 
 

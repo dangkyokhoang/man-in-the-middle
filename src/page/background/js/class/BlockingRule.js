@@ -79,7 +79,7 @@ class BlockingRule extends RequestRule {
             const matches = url.match(RegExp(filter.urlMatches));
             for (let i = matches.length - 1; i > 0; i--) {
                 const search = RegExp('\\$' + i.toString(), 'g');
-                redirectUrl = redirectUrl.replace(search, matches[i]);
+                redirectUrl = redirectUrl.replace(search, matches[i] || '');
             }
         }
 
