@@ -124,10 +124,13 @@ textarea {
     width: 7.5em;
 }
 
+.switch::after {
+    display: inline-block;
+    content: '';
+}
+
 .switch > input {
-    opacity: 0;
-    width: 0;
-    height: 0;
+    display: none;
 }
 
 .slider {
