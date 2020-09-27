@@ -5,9 +5,20 @@ class Storage {
      * @param {(string[]|string|void)} [keys]
      * @return {Promise}
      */
-    static get(keys) {
+    static syncGet(keys) {
         return browser.storage.sync.get(keys).then(
             data => Array.isArray(keys) || !keys ? data : data[keys],
+            Logger.log
+        );
+    }
+
+    /**
+     * @param {(string[]|string|void)} [key]
+     * @return {Promise}
+     */
+    static localGet(key) {
+        return browser.storage.local.get(key).then(
+            data => Array.isArray(key) || !key ? data : data[key],
             Logger.log
         );
     }
@@ -17,12 +28,20 @@ class Storage {
      * @param {boolean} [silent]
      * @return {void}
      */
-    static set(keys, silent = true) {
+    static syncSet(keys, silent = true) {
         browser.storage.sync.set(keys).catch(Logger.log);
 
         // If 'silent' is set to true,
         // changes made won't trigger storage-changed event listeners.
         silent && this.changes.push(Object.entries(keys));
+    }
+
+    /**
+     * @param {!Object} keys
+     * @return {void}
+     */
+    static localSet(keys) {
+        browser.storage.local.set(keys).catch(Logger.log);
     }
 
     /**

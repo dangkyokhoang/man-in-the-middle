@@ -5,16 +5,6 @@
  */
 class Factory {
     /**
-     * Rule constructors MUST be registered with the factory via this method.
-     * @param {string} type
-     * @param {Object} constructor
-     * @return {void}
-     */
-    static register(type, constructor) {
-        this.types.set(type, constructor);
-    }
-
-    /**
      * Initialize rule instances by types.
      * If no type is specified, initialize all types of rules.
      * @param {(string[]|string|void)} [types]
@@ -23,9 +13,9 @@ class Factory {
      */
     static async initialize(types = this.getTypes(), data) {
         if (Array.isArray(types)) {
-            types.forEach(async type => {
+            for (const type of types) {
                 await this.initialize(type, data ? data[type] : null);
-            });
+            }
             return;
         }
 
@@ -54,7 +44,8 @@ class Factory {
         this.saveData(type);
 
         // Return the details of the newly created rule
-        return instance.getDetails();
+        const data = instance.getDetails();
+        return {...data, sync: true};
     }
 
     /**
@@ -65,7 +56,15 @@ class Factory {
      * @return {void}
      */
     static modify(type, id, changes) {
-        this.types.get(type).instances.get(id).update(changes);
+        if (changes.hasOwnProperty('sync')) {
+            if (changes.sync) {
+                this.local.delete(id);
+            } else {
+                this.local.add(id);
+            }
+        } else {
+            this.types.get(type).instances.get(id).update(changes);
+        }
 
         // Update storage
         this.saveData(type);
@@ -87,10 +86,19 @@ class Factory {
     /**
      * Get data of a type of rule.
      * @param {string} type
+     * @param {boolean} raw
      * @return {Object[]}
      */
-    static getData(type) {
-        return this.getRules(type).map(rule => rule.getDetails());
+    static getData(type, raw) {
+        const rules = this.getRules(type)
+        return raw
+            ? rules
+            : rules.map(rule => {
+                const data = rule.getDetails();
+                const {id} = data;
+                const sync = !this.local.has(id);
+                return {...data, sync};
+            });
     }
 
     /**
@@ -137,8 +145,27 @@ class Factory {
      * @param type
      * @return {Promise}
      */
-    static readData(type) {
-        return Storage.get(type);
+    static async readData(type) {
+        const {fields} = this.types.get(type);
+        const index = fields.indexOf('id')
+        const local = await Storage.localGet(type) || [];
+        const sync = await Storage.syncGet(type) || [];
+        const rules = [...local, ...sync];
+
+        local.forEach(data => this.local.add(data[index]));
+
+        return rules.map(data => {
+            if (!Array.isArray(data)) {
+                return data;
+            }
+
+            const rule = {};
+            data.forEach((value, index) => {
+                const field = fields[index];
+                rule[field] = value;
+            });
+            return rule;
+        });
     }
 
     /**
@@ -148,7 +175,29 @@ class Factory {
      * @return {void}
      */
     static saveData(type) {
-        Storage.set({[type]: this.getData(type)});
+        const {fields} = this.types.get(type);
+        const local = [];
+        const sync = [];
+
+        this.getData(type, true).forEach(rule => {
+            const {id} = rule;
+            const data = fields.map(field => rule[field]);
+
+            if (this.local.has(id)) {
+                local.push(data);
+            } else {
+                sync.push(data);
+            }
+        });
+
+        Storage.localSet({[type]: local});
+        Storage.syncSet({[type]: sync});
+    }
+
+    static upgradeDatabase() {
+        const types = this.getTypes();
+
+        types.forEach(type => this.saveData(type));
     }
 }
 
@@ -156,4 +205,15 @@ class Factory {
  * A map of rule constructors.
  * @type {Map<string, Object>}
  */
-Factory.types = new Map;
+Factory.types = new Map([
+    ['blockingRules', BlockingRule],
+    ['headerRules', HeaderRule],
+    ['responseRules', ResponseRule],
+    ['contentScripts', ContentScript],
+]);
+
+/**
+ * Stores local rules' ids.
+ * @type {Set<string>}
+ */
+Factory.local = new Set;

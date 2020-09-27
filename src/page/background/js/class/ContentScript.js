@@ -145,6 +145,13 @@ ContentScript.default = {
     domEvent: 'completed',
 };
 
+ContentScript.fields = [
+    ...ContentScript.fields,
+    'code',
+    'scriptType',
+    'domEvent',
+];
+
 /**
  * @inheritDoc
  */
@@ -183,8 +190,6 @@ ContentScript.injectors = {
     JavaScript: browser.tabs.executeScript,
     CSS: browser.tabs.insertCSS,
 };
-
-Factory.register('contentScripts', ContentScript);
 
 /**
  * @typedef {RuleDetails} ContentScriptDetails

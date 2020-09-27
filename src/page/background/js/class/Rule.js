@@ -68,8 +68,8 @@ class Rule {
     }
 
     getDetails() {
-        const details = {id: this.id};
-        Object.keys(this.constructor.default).forEach(key => {
+        const details = {};
+        this.constructor.fields.forEach(key => {
             details[key] = this[key];
         });
         return details;
@@ -171,6 +171,17 @@ Rule.default = {
     urlFilters: [],
     originUrlFilters: [],
 };
+
+/**
+ * @type {string[]}
+ */
+Rule.fields = [
+    'id',
+    'name',
+    'enabled',
+    'urlFilters',
+    'originUrlFilters',
+];
 
 /**
  * Rule property setters.

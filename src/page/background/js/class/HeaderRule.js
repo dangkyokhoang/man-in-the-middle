@@ -144,6 +144,12 @@ HeaderRule.default = {
     headerType: 'requestHeaders',
 };
 
+HeaderRule.fields = [
+    ...HeaderRule.fields,
+    'textHeaders',
+    'headerType',
+];
+
 /**
  * @inheritDoc
  */
@@ -200,8 +206,6 @@ HeaderRule.headerMethods = {
         + `header=>header.name.toLowerCase()===name.toLowerCase());`,
     ],
 };
-
-Factory.register('headerRules', HeaderRule);
 
 /**
  * @typedef {RequestRuleDetails} HeaderRuleDetails

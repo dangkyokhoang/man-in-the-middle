@@ -194,7 +194,7 @@ class DOM {
      * @param {ToggleSwitchDetails}
      * @return {Object<HTMLElement>}
      */
-    static createToggleSwitch({parent, checked}) {
+    static createToggleSwitch({parent, labels, checked}) {
         const checkbox = this.createNode({
             tagName: 'INPUT',
             attributes: {
@@ -214,6 +214,21 @@ class DOM {
                     {
                         tagName: 'SPAN',
                         classList: ['slider'],
+                        children: [
+                            {
+                                tagName: 'SPAN',
+                                children: [
+                                    {
+                                        tagName: 'SPAN',
+                                        children: [{text: labels[0]}],
+                                    },
+                                    {
+                                        tagName: 'SPAN',
+                                        children: [{text: labels[1]}],
+                                    },
+                                ],
+                            },
+                        ],
                     },
                 ],
             }],

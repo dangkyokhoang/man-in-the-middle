@@ -144,12 +144,11 @@ textarea {
     cursor: pointer;
 }
 
-.slider:before {
+.slider > span {
     position: absolute;
-    content: 'Disabled';
     left: 0.25em;
     bottom: 0.25em;
-    width: 3.75em;
+    width: 5.75em;
     border-radius: 1.25em;
     padding: 0.5em 1em;
     background-color: var(--yellow-1);
@@ -161,8 +160,15 @@ input:checked + .slider {
     background-color: var(--green-0);
 }
 
-input:checked + .slider:before {
-    content: 'Enabled';
+input:checked + .slider > span {
     background-color: var(--green-1);
     transform: translateX(1.25em);
+}
+
+input:checked + .slider > span > :first-child {
+    display: none;
+}
+
+input:not(:checked) + .slider > span > :last-child {
+    display: none;
 }

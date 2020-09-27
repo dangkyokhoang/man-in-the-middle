@@ -36,32 +36,19 @@ class BlockingRule extends RequestRule {
     }
 
     /**
-     * @param {string} redirectUrl
-     * @return {void}
-     */
-    setRedirectUrl(redirectUrl) {
-        this.redirectUrl = redirectUrl;
-    }
-
-    /**
      * @private
      * @param {RequestDetails} details
      * @return {string}
      */
     async getRedirectUrl(details) {
-        let redirectUrl;
-        if (this.textRedirectUrl) {
-            if (this.textType === 'JavaScript') {
-                return await this.constructor.executeScript(
-                    details,
-                    this.textRedirectUrl
-                );
-            }
-
-            redirectUrl = this.textRedirectUrl;
-        } else {
-            redirectUrl = this.redirectUrl;
+        if (this.textType === 'JavaScript') {
+            return await this.constructor.executeScript(
+                details,
+                this.textRedirectUrl
+            );
         }
+
+        let redirectUrl = this.textRedirectUrl;
         if (!redirectUrl) {
             return '';
         }
@@ -100,8 +87,12 @@ BlockingRule.instances = new Map;
 BlockingRule.default = {
     ...BlockingRule.default,
     textRedirectUrl: '',
-    redirectUrl: '',
 };
+
+BlockingRule.fields = [
+    ...BlockingRule.fields,
+    'textRedirectUrl',
+]
 
 /**
  * @inheritDoc
@@ -109,7 +100,6 @@ BlockingRule.default = {
 BlockingRule.setters = {
     ...BlockingRule.setters,
     textRedirectUrl: 'setTextRedirectUrl',
-    redirectUrl: 'setRedirectUrl',
 };
 
 /**
@@ -127,8 +117,6 @@ BlockingRule.defaultUrlExceptions = {
         {urlMatches: browser.runtime.getURL('/')},
     ],
 };
-
-Factory.register('blockingRules', BlockingRule);
 
 /**
  * @typedef {RequestRuleDetails} BlockingRuleDetails

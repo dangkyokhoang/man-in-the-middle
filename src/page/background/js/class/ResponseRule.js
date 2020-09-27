@@ -116,6 +116,11 @@ ResponseRule.default = {
     textResponse: '',
 };
 
+ResponseRule.fields = [
+    ...ResponseRule.fields,
+    'textResponse',
+];
+
 /**
  * @inheritDoc
  */
@@ -212,8 +217,6 @@ ResponseRule.encodings = [
  * @type {string}
  */
 ResponseRule.defaultEncoding = 'utf-8';
-
-Factory.register('responseRules', ResponseRule);
 
 /**
  * @typedef {RequestRuleDetails} ResponseRuleDetails

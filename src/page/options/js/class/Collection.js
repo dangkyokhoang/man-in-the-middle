@@ -292,9 +292,9 @@ Collection.types = {
         'method',
         'textRedirectUrl',
         'textType',
-        'redirectUrl',
         'originUrlFilters',
         'enabled',
+        'sync',
     ],
     headerRules: [
         'name',
@@ -305,6 +305,7 @@ Collection.types = {
         'method',
         'originUrlFilters',
         'enabled',
+        'sync',
     ],
     responseRules: [
         'name',
@@ -314,6 +315,7 @@ Collection.types = {
         'method',
         'originUrlFilters',
         'enabled',
+        'sync',
     ],
     contentScripts: [
         'name',
@@ -323,6 +325,7 @@ Collection.types = {
         'domEvent',
         'originUrlFilters',
         'enabled',
+        'sync',
     ],
 };
 
@@ -356,6 +359,14 @@ Collection.instructions = {
         valueType: 'boolean',
         input: {
             tagName: 'SWITCH',
+            labels: ['Disabled', 'Enabled'],
+        },
+    },
+    sync: {
+        valueType: 'boolean',
+        input: {
+            tagName: 'SWITCH',
+            labels: ['Local', 'Sync'],
         },
     },
     urlFilters: {
@@ -399,14 +410,6 @@ Collection.instructions = {
             tagName: 'TEXTAREA',
             label: 'Text redirect URL',
             placeholder: 'Plaintext or JavaScript to redirect requests',
-        },
-    },
-    redirectUrl: {
-        valueType: 'string',
-        input: {
-            tagName: 'INPUT',
-            label: 'Redirect URL (DEPRECATED, DO NOT USE)',
-            placeholder: 'URL to redirect to or blank to block',
         },
     },
     // HeaderRule

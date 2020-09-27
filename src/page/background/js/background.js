@@ -1,7 +1,7 @@
 'use strict';
 
 // Initialize all rules on startup
-Factory.initialize();
+const initialization = Factory.initialize();
 
 // If storage changes, re-initialize rules.
 Storage.addListener(changes => changes.forEach(async ([type, {newValue}]) => {
@@ -11,6 +11,9 @@ Storage.addListener(changes => changes.forEach(async ([type, {newValue}]) => {
 
     // Re-initialize rules
     await Factory.initialize(type, newValue);
+
+    // This makes sure rules are stored in the latest [array] format.
+    await Factory.saveData(type);
 
     // Notify the options page
     Runtime.sendMessage({
@@ -46,7 +49,7 @@ Runtime.addEventListener('message', async ({sender, request, details}) => {
 });
 
 Runtime.addEventListener('installed', async () => {
-    const databaseVersion = await Storage.get('version');
+    const databaseVersion = await Storage.localGet('version');
     const version = Runtime.getManifest('version');
 
     const {result, difference} = Utils.versionCompare(
@@ -60,13 +63,17 @@ Runtime.addEventListener('installed', async () => {
         return;
     }
 
+    await initialization;
+
     // If there's a major or minor update (not a patch one),
     // open the options page.
     if (difference === 'major' || difference === 'minor') {
         await Tabs.openOptionsPage();
     }
 
-    await Storage.set({version});
+    await Storage.localSet({version});
+
+    await Factory.upgradeDatabase();
 });
 
 // Open the options page if user clicks the extension icon

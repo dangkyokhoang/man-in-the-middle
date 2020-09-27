@@ -123,6 +123,12 @@ RequestRule.default = {
     textType: 'plaintext',
 };
 
+RequestRule.fields = [
+    ...RequestRule.fields,
+    'method',
+    'textType',
+];
+
 /**
  * @inheritDoc
  */
