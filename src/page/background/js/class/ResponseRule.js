@@ -34,7 +34,7 @@ class ResponseRule extends RequestRule {
 
         if (this.textType === 'plaintext') {
             filter.onstart = async () => {
-                filter.write(encoder.encode(await this.getResponse(null)));
+                filter.write(encoder.encode(await this.getResponse()));
                 filter.close();
             };
             return;

@@ -4,13 +4,13 @@
 const initialization = Factory.initialize();
 
 // If storage changes, re-initialize rules.
-Storage.addListener(changes => changes.forEach(async ([type, {newValue}]) => {
+Storage.addListener(changes => changes.forEach(async ([type]) => {
     if (!Factory.hasType(type)) {
         return;
     }
 
     // Re-initialize rules
-    await Factory.initialize(type, newValue);
+    await Factory.initialize(type);
 
     // This makes sure rules are stored in the latest [array] format.
     await Factory.saveData(type);
