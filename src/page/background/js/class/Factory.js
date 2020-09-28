@@ -27,8 +27,18 @@ class Factory {
 
         // Create new instances
         data = data || await this.readData(type);
-        Array.isArray(data) && data.forEach(details => {
-            this.create(type, details);
+        Array.isArray(data) && data.forEach(data => {
+            let rule = {}
+            if (Array.isArray(data)) {
+                const {fields} = this.types.get(type);
+                data.forEach((value, index) => {
+                    const field = fields[index];
+                    rule[field] = value;
+                });
+            } else {
+                rule = data;
+            }
+            this.create(type, rule);
         });
     }
 
@@ -154,18 +164,7 @@ class Factory {
 
         local.forEach(data => this.local.add(data[index]));
 
-        return rules.map(data => {
-            if (!Array.isArray(data)) {
-                return data;
-            }
-
-            const rule = {};
-            data.forEach((value, index) => {
-                const field = fields[index];
-                rule[field] = value;
-            });
-            return rule;
-        });
+        return rules;
     }
 
     /**

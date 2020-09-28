@@ -30,10 +30,19 @@ class ResponseRule extends RequestRule {
          * @type {Object}
          */
         const filter = browser.webRequest.filterResponseData(requestId);
+        const encoder = new TextEncoder();
+
+        if (this.textType === 'plaintext') {
+            filter.onstart = async () => {
+                filter.write(encoder.encode(await this.getResponse(null)));
+                filter.close();
+            };
+            return;
+        }
+
         const decoder = new TextDecoder(
             charset || this.constructor.defaultEncoding
         );
-        const encoder = new TextEncoder();
 
         // Request body as a property of the request details
         details.responseBody = '';
