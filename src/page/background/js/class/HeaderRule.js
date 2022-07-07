@@ -176,10 +176,12 @@ HeaderRule.extraInfoSpecs = {
     requestHeaders: [
         ...HeaderRule.extraInfoSpec,
         'requestHeaders',
+        'extraHeaders'
     ],
     responseHeaders: [
         ...HeaderRule.extraInfoSpec,
         'responseHeaders',
+        'extraHeaders'
     ],
 };
 
